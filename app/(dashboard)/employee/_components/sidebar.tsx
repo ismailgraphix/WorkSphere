@@ -20,7 +20,7 @@ const Sidebar = () => {
         
         <Link href="/admin" className=" p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
           <span>📊</span>
-          <span>Dashboard</span>
+          <span>Dashboard emp</span>
         </Link>
 
         <Link href="/employees" className=" p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">

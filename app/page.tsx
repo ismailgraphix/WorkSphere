@@ -55,7 +55,7 @@ const Login = () => {
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="robertallen@example.com"
+            placeholder="admin@example.com"
             required
           />
         </div>
