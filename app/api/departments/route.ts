@@ -1,45 +1,46 @@
-import { NextResponse } from 'next/server'; 
-import { prisma } from '@/lib/db';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db'; // Assuming you have a Prisma client instance
+import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret'; // Ensure this matches the one used in login
 
-export async function POST(request: Request) {
-  // Extract JWT token from Authorization header
-  const token = request.headers.get('Authorization')?.split(' ')[1];
-
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized. No token provided.' }, { status: 401 });
-  }
-
-  let user: string | JwtPayload;
+export async function POST(request: NextRequest) {
   try {
-    // Verify and decode the token
-    user = jwt.verify(token, JWT_SECRET);
-    
-    // Check if user is a valid object and has necessary properties
-    if (typeof user !== 'object' || !user.role || !user.id) {
-      return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
+    // Extract JWT from cookies
+    const cookies = request.headers.get('cookie');
+    const token = cookies?.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized. No token provided.' }, { status: 401 });
     }
 
-  } catch (error) {
-    console.error('Token verification failed:', error);
-    return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
-  }
+    let user;
+    try {
+      // Verify and decode the token
+      user = jwt.verify(token, JWT_SECRET);
+      
+      // Check if user is a valid object and has the necessary properties
+      if (typeof user !== 'object' || !user.role || !user.id) {
+        return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
+      }
 
-  // Admin role check
-  if (user.role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Permission denied. Admins only.' }, { status: 403 });
-  }
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
+    }
 
-  // Parse request body for department data
-  const { name, departmentHeadId } = await request.json();
+    // Admin role check
+    if (user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Permission denied. Admins only.' }, { status: 403 });
+    }
 
-  if (!name || !departmentHeadId) {
-    return NextResponse.json({ error: 'Name and department head are required.' }, { status: 400 });
-  }
+    // Parse request body for department data
+    const { name, departmentHeadId } = await request.json();
 
-  try {
+    if (!name || !departmentHeadId) {
+      return NextResponse.json({ error: 'Name and department head are required.' }, { status: 400 });
+    }
+
     // Create a new department record
     const department = await prisma.department.create({
       data: {

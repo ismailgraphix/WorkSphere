@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { ModeToggle } from "./toggle-btn"; // Assuming a dark/light mode toggle button component
-import Profile from "./profile"; // Profile component for avatar, user name, and role
+import { ModeToggle } from "./toggle-btn"; 
+import Profile from "./profile"; 
+
 
  
 
@@ -45,11 +46,7 @@ const DashboardHeader = () => {
       <div className="flex items-center space-x-4">
         {/* Search Input */}
         <div className="relative">
-          <input
-            type="text"
-            placeholder="Type to search..."
-            className="p-2 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-          />
+          
         
         </div>
 

@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';  // Make sure to store your secret securely
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';  // Store your secret securely in env variables
 
 export const POST = async (req: Request) => {
   try {
@@ -17,13 +17,7 @@ export const POST = async (req: Request) => {
 
     // Check if the user exists
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      return new Response(JSON.stringify({ message: 'Invalid email or password' }), { status: 401 });
-    }
-
-    // Compare password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return new Response(JSON.stringify({ message: 'Invalid email or password' }), { status: 401 });
     }
 
@@ -35,17 +29,23 @@ export const POST = async (req: Request) => {
         role: user.role
       },
       JWT_SECRET,
-      { expiresIn: '1h' }  // The token will expire in 1 hour
+      { expiresIn: '1h' }  // Token expiration (1 hour)
     );
 
-    // Return the token along with the user info
+    // Set the token in an HTTP-only cookie
+    const headers = new Headers();
+    headers.append(
+      'Set-Cookie',
+      `token=${token}; HttpOnly; Path=/; Max-Age=3600; SameSite=Strict; Secure`
+    );
+
+    // Return success response with the user information (without token in body)
     return new Response(
       JSON.stringify({
         message: 'Login successful',
-        token,  // Send the generated JWT token
         user: { id: user.id, name: user.name, email: user.email, role: user.role }
       }),
-      { status: 200 }
+      { status: 200, headers }
     );
   } catch (error) {
     console.error('Error logging in:', error);

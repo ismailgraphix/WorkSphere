@@ -10,36 +10,46 @@ import { Label } from "@/components/ui/label";
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  const redirectUser = (role) => {
+    switch (role) {
+      case 'ADMIN':
+        return '/admin';
+      case 'HR':
+        return '/hr';
+      case 'EMPLOYEE':
+        return '/employee';
+      default:
+        return '/';
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true); // Start loading
 
     try {
       const response = await axios.post('/api/auth/login', { email, password });
-      const user = response.data.user;
+      const { token, user } = response.data; // Ensure token is included in the response
 
-      // Store user details in localStorage
+      // Store user and token in localStorage
       localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('token', token);
 
       console.log('User logged in:', user);
 
       // Redirect based on user role
-      if (user.role === 'ADMIN') {
-        router.push('/admin');
-      } else if (user.role === 'HR') {
-        router.push('/hr');
-      } else if (user.role === 'EMPLOYEE') {
-        router.push('/employee');
-      } else {
-        router.push('/');
-      }
+      const redirectPath = redirectUser(user.role);
+      router.push(redirectPath);
     } catch (error) {
-      if (error instanceof Error) {
-        console.error('Login failed:', error.message);
-      } else {
-        console.error('Unexpected error:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Login failed:', error.response?.data?.message || error.message);
+        // Optionally, you can set an error state to display it in the UI
       }
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 
@@ -72,7 +82,9 @@ const Login = () => {
           />
         </div>
         
-        <Button type="submit" className="w-full">Login</Button>
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? 'Logging in...' : 'Login'}
+        </Button>
       </form>
     </div>
   );
