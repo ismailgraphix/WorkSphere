@@ -1,71 +1,85 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import {prisma} from "@/lib/db"; // Adjust the import based on your project structure
-import { z } from "zod";
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db'; // Assuming you have Prisma setup
+import jwt from 'jsonwebtoken';
 
-// Define the schema for incoming employee registration data
-const employeeSchema = z.object({
-  employeeId: z.string(),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  middleName: z.string().optional(),
-  email: z.string().email(),
-  phoneNumber: z.string(),
-  gender: z.string(),
-  dateOfBirth: z.string().refine((date) => !isNaN(Date.parse(date))), // Validates date format
-  address: z.string(),
-  nationalID: z.string(),
-  departmentId: z.string(),
-  position: z.string(),
-  dateOfJoining: z.string().refine((date) => !isNaN(Date.parse(date))),
-  employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT"]),
-  maritalStatus: z.enum(["SINGLE", "MARRIED", "DIVORCED"]),
-  emergencyContactName: z.string(),
-  emergencyContactPhone: z.string(),
-  emergencyContactRelationship: z.string(),
-  bankName: z.string().optional(),
-  bankAccountNumber: z.string().optional(),
-  bankBranch: z.string().optional(),
-  taxID: z.string().optional(),
-  socialSecurityNumber: z.string().optional(),
-  salary: z.number().optional(),
-  currency: z.enum(["NGN", "USD", "EUR"]).optional(),
-  isProbation: z.boolean().optional(),
-  probationEndDate: z.string().optional(),
-  contractEndDate: z.string().optional(),
-  profileImage: z.string().optional(),
-  resumeLink: z.string().optional(),
-  contractLink: z.string().optional(),
-  identityDocumentLink: z.string().optional(),
-});
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
-// Define the API route handler
-export default async function registerEmployee(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === "POST") {
-    try {
-      // Validate the incoming request body
-      const employeeData = employeeSchema.parse(req.body);
+export async function POST(request: NextRequest) {
+  try {
+    // Extract and verify JWT token from headers or cookies
+    const cookies = request.headers.get('cookie');
+    const token = cookies?.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
 
-      // Create the employee record in the database
-      const newEmployee = await prisma.employee.create({
-        data: {
-          ...employeeData,
-          dateOfBirth: new Date(employeeData.dateOfBirth),
-          dateOfJoining: new Date(employeeData.dateOfJoining),
-        },
-      });
-
-      // Respond with the created employee data
-      res.status(201).json(newEmployee);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      console.error("Error creating employee:", error);
-      res.status(500).json({ error: "Internal Server Error" });
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized. No token provided.' }, { status: 401 });
     }
-  } else {
-    // Method Not Allowed
-    res.setHeader("Allow", ["POST"]);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+
+    let user;
+    try {
+      user = jwt.verify(token, JWT_SECRET);
+
+      if (typeof user !== 'object' || !user.role || !user.id) {
+        return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
+      }
+    } catch (error) {
+      return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
+    }
+
+    // Parse request body
+    const body = await request.json();
+
+    // Validation
+    const requiredFields = [
+      'firstName', 'lastName', 'email', 'phoneNumber', 'gender', 'dateOfBirth', 'address', 'nationalID', 'departmentId',
+      'position', 'dateOfJoining', 'employmentType', 'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelationship',
+      'maritalStatus'  // Include maritalStatus in required fields
+    ];
+
+    for (const field of requiredFields) {
+      if (!body[field]) {
+        return NextResponse.json({ error: `${field} is required.` }, { status: 400 });
+      }
+    }
+
+    // Auto-generate employeeId (e.g., first 3 characters of firstName + random unique identifier)
+    const employeeId = `${body.firstName.slice(0, 3).toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // Parse salary as float
+    const salary = body.salary ? parseFloat(body.salary) : null;
+
+    // Create employee in the database using Prisma
+    const employee = await prisma.employee.create({
+      data: {
+        employeeId, // Use the generated employeeId
+        firstName: body.firstName,
+        lastName: body.lastName,
+        middleName: body.middleName || '',
+        email: body.email,
+        phoneNumber: body.phoneNumber,
+        gender: body.gender,
+        dateOfBirth: new Date(body.dateOfBirth),
+        address: body.address,
+        nationalID: body.nationalID,
+        departmentId: body.departmentId,
+        position: body.position,
+        dateOfJoining: new Date(body.dateOfJoining),
+        employmentType: body.employmentType,
+        emergencyContactName: body.emergencyContactName,
+        emergencyContactPhone: body.emergencyContactPhone,
+        emergencyContactRelationship: body.emergencyContactRelationship,
+        salary,  // Use the parsed salary here
+        currency: body.currency || null,
+        employmentStatus: body.employmentStatus || 'ACTIVE',
+        isProbation: body.isProbation === 'true',
+        probationEndDate: body.probationEndDate ? new Date(body.probationEndDate) : null,
+        contractEndDate: body.contractEndDate ? new Date(body.contractEndDate) : null,
+        maritalStatus: body.maritalStatus,  // Include maritalStatus here
+      },
+    });
+
+    return NextResponse.json(employee, { status: 201 });
+  } catch (error) {
+    console.error('Error creating employee:', error);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }
