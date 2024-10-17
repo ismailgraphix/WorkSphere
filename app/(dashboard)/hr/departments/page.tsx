@@ -30,11 +30,11 @@ const DepartmentPage = () => {
     }, []);
 
     if (loading) {
-        
+        return <p>Loading...</p>; // Display loading state
     }
 
     if (error) {
-        return ; // Display error message if something goes wrong
+        return <p>{error}</p>; // Display error message if something goes wrong
     }
 
     return (

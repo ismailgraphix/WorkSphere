@@ -18,7 +18,7 @@ const Sidebar = () => {
       <nav className="space-y-4">
         <h3 className="text-gray-400 uppercase text-xs mb-2">Main Menu</h3>
         
-        <Link href="/admin" className=" p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
+        <Link href="/admin/departments" className=" p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
           <span>📊</span>
           <span>Dashboard emp</span>
         </Link>

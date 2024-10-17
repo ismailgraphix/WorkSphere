@@ -24,7 +24,7 @@ const AdminSidebar = () => {
           <span>Dashboard</span>
         </Link>
 
-        <Link href="/employees" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
+        <Link href="/admin/employees" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
         <Users />
           <span>Employees</span>
         </Link>

@@ -29,7 +29,7 @@ export const POST = async (req: Request) => {
         role: user.role
       },
       JWT_SECRET,
-      { expiresIn: '1h' }  // Token expiration (1 hour)
+      { expiresIn: '11h' }  // Token expiration (1 hour)
     );
 
     // Set the token in an HTTP-only cookie

@@ -1,29 +1,26 @@
-"use client"; // Ensure this component is rendered on the client-side
-
+"use client";
 import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogHeader,
+  AlertDialogFooter,
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogTrigger,
   AlertDialogCancel,
-  AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox"; // Import the Shadcn Checkbox
 import axios from "axios";
-import { useToast } from "@/hooks/use-toast"; // Import your useToast hook
 
 export default function AddDepartmentModal() {
   const [name, setName] = useState("");
   const [departmentHeadId, setDepartmentHeadId] = useState("");
-  const [isActive, setIsActive] = useState(true);
+  const [isActive, setIsActive] = useState(true); // Default to true
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast(); // Use the toast hook
 
   const handleSubmit = async () => {
     setError("");
@@ -49,25 +46,15 @@ export default function AddDepartmentModal() {
       );
 
       if (response.status === 201) {
-        toast({
-          title: "Success",
-          description: "Department added successfully!",
-        });
+        setLoading(false);
+        alert("Department added successfully!");
         setName("");
         setDepartmentHeadId("");
         setIsActive(true);
-
-        // Reload the page to reflect changes
-        window.location.reload(); // This will refresh the page
       }
     } catch (error) {
-      console.error("Error adding department:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add department. Please try again.",
-        variant: "destructive", // Optional styling variant
-      });
-    } finally {
+      console.error(error);
+      setError("Failed to add department. Please try again.");
       setLoading(false);
     }
   };

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db'; // Assuming you have a Prisma client instance
+import { prisma } from '@/lib/db'; // Adjust this import based on your project structure
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret'; // Ensure this matches the one used in login
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest, { params }: { params: { departmentId: string } }) {
+  const { departmentId } = params;
+
   try {
     // Extract JWT from cookies
     const cookies = request.headers.get('cookie');
@@ -30,34 +32,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body for department data
-    const { name, departmentHeadId } = await request.json();
+    const { name, departmentHeadId, isActive } = await request.json();
 
     if (!name || !departmentHeadId) {
       return NextResponse.json({ error: 'Name and department head are required.' }, { status: 400 });
     }
 
-    // Create a new department record
-    const department = await prisma.department.create({
+    // Update the department record
+    const updatedDepartment = await prisma.department.update({
+      where: { id: departmentId },
       data: {
         name,
         departmentHeadId,
-        createdById: user.id as string, // Ensure user.id is treated as a string
-        isActive: true, // Default to false as per your requirement
+        isActive, // Handle isActive based on your requirements
       },
     });
 
-    // If the user is an admin, they can also set isActive
-    if (user.role === 'ADMIN') {
-      // Optionally, add logic here if you want admins to immediately activate the department
-    }
-
-    return NextResponse.json(department, { status: 201 });
+    return NextResponse.json(updatedDepartment, { status: 200 });
   } catch (error) {
-    console.error('Error creating department:', error);
+    console.error('Error updating department:', error);
     return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }
-export async function GET(request: NextRequest) {
+
+export async function DELETE(request: NextRequest, { params }: { params: { departmentId: string } }) {
+  const { departmentId } = params;
+
   try {
     // Extract JWT from cookies
     const cookies = request.headers.get('cookie');
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     try {
       // Verify and decode the token
       user = jwt.verify(token, JWT_SECRET);
-
+      
       // Check if user is a valid object and has the necessary properties
       if (typeof user !== 'object' || !user.role || !user.id) {
         return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
@@ -86,27 +86,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Permission denied. Only Admins and HR can access this resource.' }, { status: 403 });
     }
 
-    // Fetch all departments without filtering by isActive, allowing for both active and inactive departments
-    const departments = await prisma.department.findMany({
-      include: {
-        departmentHead: {
-          select: {
-            id: true,
-            name: true, // Ensure department head's name is fetched
-          },
-        },
-        createdBy: {
-          select: {
-            id: true,
-            name: true, // Fetch the name of the user who created the department if needed
-          },
-        },
-      },
+    // Delete the department
+    await prisma.department.delete({
+      where: { id: departmentId },
     });
 
-    return NextResponse.json(departments, { status: 200 });
+    return NextResponse.json({ message: 'Department deleted successfully' }, { status: 200 });
   } catch (error) {
-    console.error('Error fetching departments:', error);
+    console.error('Error deleting department:', error);
     return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

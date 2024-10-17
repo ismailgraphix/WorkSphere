@@ -2,6 +2,7 @@ import { Quicksand, Outfit } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import type { Metadata } from 'next';
+import { Toast, ToastProvider } from '@/components/ui/toast';
 
 // Importing both Quicksand and Outfit fonts
 const quicksand = Quicksand({
@@ -29,14 +30,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${quicksand.variable} ${outfit.variable} font-sans antialiased`}>
+        <ToastProvider>
+        <Toast/>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
+          
           {children}
+         
         </ThemeProvider>
+        </ToastProvider>
+        
       </body>
     </html>
   );

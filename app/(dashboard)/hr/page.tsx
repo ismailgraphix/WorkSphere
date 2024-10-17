@@ -4,11 +4,7 @@ const HumanResourcePage = () => {
     return ( 
         <>  
         <div className="flex">
-          
     </div>
-            
-            
-          
             </>
      );
 }

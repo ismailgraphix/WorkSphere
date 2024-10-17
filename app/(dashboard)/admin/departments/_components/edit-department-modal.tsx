@@ -1,31 +1,45 @@
-"use client"; // Ensure this component is rendered on the client-side
+"use client";
 
 import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogHeader,
+  AlertDialogFooter,
   AlertDialogTitle,
   AlertDialogDescription,
-  AlertDialogTrigger,
   AlertDialogCancel,
-  AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox"; // Import the Shadcn Checkbox
 import axios from "axios";
-import { useToast } from "@/hooks/use-toast"; // Import your useToast hook
+import { useToast } from "@/hooks/use-toast"; // Import the toast hook
 
-export default function AddDepartmentModal() {
-  const [name, setName] = useState("");
-  const [departmentHeadId, setDepartmentHeadId] = useState("");
-  const [isActive, setIsActive] = useState(true);
+interface EditDepartmentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  department: {
+    id: string;
+    name: string;
+    departmentHeadId: string;
+    isActive: boolean;
+  };
+}
+
+export const EditDepartmentModal: React.FC<EditDepartmentModalProps> = ({
+  isOpen,
+  onClose,
+  department,
+}) => {
+  const { toast } = useToast(); // Initialize toast
+  const [name, setName] = useState(department.name);
+  const [departmentHeadId, setDepartmentHeadId] = useState(department.departmentHeadId);
+  const [isActive, setIsActive] = useState(department.isActive);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast(); // Use the toast hook
 
-  const handleSubmit = async () => {
+  const handleUpdate = async () => {
     setError("");
     setLoading(true);
 
@@ -38,8 +52,8 @@ export default function AddDepartmentModal() {
     }
 
     try {
-      const response = await axios.post(
-        "/api/departments",
+      const response = await axios.put(
+        `/api/departments/${department.id}`,
         { name, departmentHeadId, isActive },
         {
           headers: {
@@ -48,40 +62,35 @@ export default function AddDepartmentModal() {
         }
       );
 
-      if (response.status === 201) {
+      if (response.status === 200) {
         toast({
-          title: "Success",
-          description: "Department added successfully!",
+          title: "Department Updated",
+          description: "The department has been successfully updated.",
+          variant: "success", // You can define variants for styling
         });
-        setName("");
-        setDepartmentHeadId("");
-        setIsActive(true);
-
-        // Reload the page to reflect changes
-        window.location.reload(); // This will refresh the page
+        window.location.reload();
+        setLoading(false);
+        onClose();
       }
     } catch (error) {
-      console.error("Error adding department:", error);
+      console.error(error);
+      setError("Failed to update department. Please try again.");
       toast({
         title: "Error",
-        description: "Failed to add department. Please try again.",
-        variant: "destructive", // Optional styling variant
+        description: "Failed to update department.",
+        variant: "destructive", // Example variant for error
       });
-    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="outline">Add Department</Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Add Department</AlertDialogTitle>
+          <AlertDialogTitle>Edit Department</AlertDialogTitle>
           <AlertDialogDescription>
-            Enter the details of the new department.
+            Update the details of the department.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -109,14 +118,16 @@ export default function AddDepartmentModal() {
         </div>
 
         <AlertDialogFooter>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Adding..." : "Add Department"}
+          <Button onClick={handleUpdate} disabled={loading}>
+            {loading ? "Updating..." : "Update Department"}
           </Button>
           <AlertDialogCancel asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
           </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
-}
+};

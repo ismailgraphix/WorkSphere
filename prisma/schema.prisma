@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,24 +8,99 @@ datasource db {
 }
 
 model User {
-  id       String   @id @default(cuid())
-  name     String
-  email    String   @unique
-  password String
-  role     Role     @default(EMPLOYEE)
-  departmentsHeaded Department[] @relation("DepartmentHead")
-  departmentsCreated Department[] @relation("DepartmentCreator")
+  id                String      @id @default(cuid())
+  name              String
+  email             String      @unique
+  password          String
+  role              Role        @default(EMPLOYEE)
+  
+  // Relations
+  headedDepartments Department[] @relation("DepartmentHead")
+  createdDepartments Department[] @relation("DepartmentCreator")
+}
+
+model Employee {
+  id                        String   @id @default(uuid()) @unique
+  employeeId                String   @unique
+  firstName                 String
+  lastName                  String
+  middleName                String?
+  email                     String   @unique
+  phoneNumber               String   @unique
+  gender                    String
+  dateOfBirth               DateTime
+  address                   String
+  nationalID                String   @unique
+  departmentId              String
+  department                Department @relation("EmployeeDepartment", fields: [departmentId], references: [id], onDelete: Cascade)
+  position                  String
+  dateOfJoining             DateTime
+  employmentType            EmploymentType 
+  maritalStatus             MaritalStatus  
+  emergencyContactName      String
+  emergencyContactPhone     String
+  emergencyContactRelationship String
+  bankName                  String?
+  bankAccountNumber         String?
+  bankBranch                String?
+  taxID                     String?
+  socialSecurityNumber      String?
+  salary                    Float?
+  currency                  Currency?     // NGN, USD, EUR
+  isProbation               Boolean  @default(false)
+  probationEndDate          DateTime?
+  contractEndDate           DateTime?
+  employmentStatus          EmploymentStatus @default(ACTIVE)
+  profileImage              String? 
+  resumeLink                String?
+  contractLink              String?
+  identityDocumentLink      String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@index([email], name: "email_index")
+  @@index([nationalID], name: "nationalID_index")
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+}
+
+enum Currency {
+  NGN  
+  USD  
+  EUR  
+}
+
+enum EmploymentStatus {
+  ACTIVE
+  SUSPENDED
+  TERMINATED
 }
 
 model Department {
-  id              String   @id @default(cuid())
+  id              String     @id @default(uuid()) @unique
   name            String
-  departmentHead  User     @relation("DepartmentHead", fields: [departmentHeadId], references: [id])
-  departmentHeadId String
-  createdBy       User     @relation("DepartmentCreator", fields: [createdById], references: [id])
-  createdById     String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relations
+  departmentHeadId String?
+  departmentHead   User?     @relation("DepartmentHead", fields: [departmentHeadId], references: [id])
+  
+  employees        Employee[] @relation("EmployeeDepartment")
+  
+  createdById      String
+  createdBy        User @relation("DepartmentCreator", fields: [createdById], references: [id])
 }
 
 enum Role {
