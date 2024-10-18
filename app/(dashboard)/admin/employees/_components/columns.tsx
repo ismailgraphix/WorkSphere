@@ -1,5 +1,8 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge"; 
+import { toast } from 'react-toastify';
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { ColumnDef } from "@tanstack/react-table"
+import { Badge } from "@/components/ui/badge"
 import { MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,136 +13,86 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogOverlay, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 
 export type Employee = {
-  employeeId: string;
+  employeeId: string; // Using employeeId
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: string;
   position: string;
-  department: { name: string }; // Use department name instead of ID
-  employmentStatus: "ACTIVE" | "SUSPENDED" | "TERMINATED"; // Add employmentStatus here
-};
+  department: { name: string };
+  employmentStatus: "ACTIVE" | "SUSPENDED" | "TERMINATED";
+}
 
 export const columns: ColumnDef<Employee>[] = [
   {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-  },
-  {
-    accessorKey: "employeeId",
-    header: "Employee ID",
-  },
-  {
-    accessorKey: "firstName",
-    header: "First Name",
-  },
-  {
-    accessorKey: "lastName",
-    header: "Last Name",
-  },
-  {
-    accessorKey: "email",
-    header: "Email",
-  },
-  {
-    accessorKey: "phoneNumber",
-    header: "Phone Number",
-  },
-  {
-    accessorKey: "position",
-    header: "Position",
-  },
-  {
-    accessorKey: "department.name", // Access nested department name
-    header: "Department",
-    cell: ({ row }) => row.original.department.name, // Display department name
-  },
-  {
-    accessorKey: "employmentStatus", // Add employment status
-    header: "Status",
-    cell: ({ row }) => {
-      const status = row.original.employmentStatus;
-      let color = "gray"; // Default color
-
-      // Determine the color based on the status
-      switch (status) {
-        case "ACTIVE":
-          color = "green"; // Active status
-          break;
-        case "SUSPENDED":
-          color = "yellow"; // Suspended status
-          break;
-        case "TERMINATED":
-          color = "red"; // Terminated status
-          break;
-        default:
-          color = "gray"; // Fallback color
-      }
-      
-      // Return a styled badge for each status
-      return (
-        <Badge
-          variant="outline"
-          style={{
-            backgroundColor: color,
-            color: "white",
-            padding: "0.3rem 0.6rem",
-            borderRadius: "0.85rem",
-            fontSize: "0.85rem",
-            fontWeight: "bold",
-          }}
-        >
-          {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
-        </Badge>
-      );
-    },
-  },
-  {
     id: "actions",
     cell: ({ row }) => {
-      const payment = row.original
- 
+      const employee = row.original;
+      const [isDialogOpen, setDialogOpen] = useState(false);
+      const router = useRouter();
+
+      const handleDelete = async () => {
+        try {
+          const response = await fetch(`/api/employees/${employee.employeeId}`, { method: 'DELETE' });
+      
+          if (!response.ok) {
+            throw new Error('Failed to delete the employee');
+          }
+      
+          toast.success("Employee deleted successfully");
+          router.refresh(); // Refresh the page
+      
+        } catch (error) {
+          toast.error("Error deleting employee");
+          console.error("Error deleting employee:", error);
+        } finally {
+          setDialogOpen(false);
+        }
+      };
+
+      const handleEdit = () => {
+        console.log("Navigating to edit employee with ID:", employee.employeeId); // Log the employee ID
+        router.push(`/admin/employees/${employee.employeeId}`);
+      }
+
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
-            >
-              View Employee
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Edit Employee</DropdownMenuItem>
-            <DropdownMenuItem>Delete Employee</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(employee.employeeId)}>
+                View Employee
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleEdit}>Edit Employee</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDialogOpen(true)}>Delete Employee</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+            <DialogOverlay />
+            <DialogContent>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete the employee?
+              </DialogDescription>
+              <DialogFooter>
+                <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleDelete} variant="destructive">Delete</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
       )
     },
   },
-
 ];
