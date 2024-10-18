@@ -83,3 +83,38 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }
+
+export async function GET(request: NextRequest) {
+  try {
+    // Extract and verify JWT token from headers or cookies
+    const cookies = request.headers.get('cookie');
+    const token = cookies?.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized. No token provided.' }, { status: 401 });
+    }
+
+    let user;
+    try {
+      user = jwt.verify(token, JWT_SECRET);
+
+      if (typeof user !== 'object' || !user.role || !user.id) {
+        return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
+      }
+    } catch (error) {
+      return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
+    }
+
+    // Fetch all employees from the database
+    const employees = await prisma.employee.findMany({
+      include: {
+        department: true, 
+      },
+    });
+
+    return NextResponse.json(employees, { status: 200 });
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
+  }
+}
