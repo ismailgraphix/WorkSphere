@@ -65,7 +65,7 @@ export default function EmployeeRegistrationForm() {
           position: formData.get("position"),
           dateOfJoining: formData.get("dateOfJoining"),
           employmentType: formData.get("employmentType"),
-          maritalStatus: formData.get("maritalStatus"), // Added marital status
+          maritalStatus: formData.get("maritalStatus"),
           emergencyContactName: formData.get("emergencyContactName"),
           emergencyContactPhone: formData.get("emergencyContactPhone"),
           emergencyContactRelationship: formData.get("emergencyContactRelationship"),
@@ -80,6 +80,10 @@ export default function EmployeeRegistrationForm() {
           bankBranch: formData.get("bankBranch"),
           taxID: formData.get("taxID"),
           socialSecurityNumber: formData.get("socialSecurityNumber"),
+          profileImage: formData.get("profileImage"),  // Add this line
+          resumeLink: formData.get("resumeLink"),      // Add this line
+          contractLink: formData.get("contractLink"),   // Add this line
+          identityDocumentLink: formData.get("identityDocumentLink"), // Add this line
         }),
         headers: {
           "Content-Type": "application/json",
@@ -290,6 +294,25 @@ export default function EmployeeRegistrationForm() {
               <Label htmlFor="contractEndDate">Contract End Date</Label>
               <Input id="contractEndDate" name="contractEndDate" type="date" />
             </div>
+            <div>
+  <Label htmlFor="profileImage">Profile Image</Label>
+  <Input id="profileImage" name="profileImage" type="file" accept="image/*" />
+</div>
+
+<div>
+  <Label htmlFor="resumeLink">Resume Link</Label>
+  <Input id="resumeLink" name="resumeLink" placeholder="Resume Link" />
+</div>
+
+<div>
+  <Label htmlFor="contractLink">Contract Link</Label>
+  <Input id="contractLink" name="contractLink" placeholder="Contract Link" />
+</div>
+
+<div>
+  <Label htmlFor="identityDocumentLink">Identity Document Link</Label>
+  <Input id="identityDocumentLink" name="identityDocumentLink" placeholder="Identity Document Link" />
+</div>
 
             <div>
               <Label htmlFor="emergencyContactName">Emergency Contact Name <span className="text-red-500">*</span></Label>

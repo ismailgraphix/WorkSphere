@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
     let user;
     try {
       user = jwt.verify(token, JWT_SECRET);
-
       if (typeof user !== 'object' || !user.role || !user.id) {
         return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
       }
@@ -30,9 +29,10 @@ export async function POST(request: NextRequest) {
 
     // Validation
     const requiredFields = [
-      'firstName', 'lastName', 'email', 'phoneNumber', 'gender', 'dateOfBirth', 'address', 'nationalID', 'departmentId',
-      'position', 'dateOfJoining', 'employmentType', 'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelationship',
-      'maritalStatus'  // Include maritalStatus in required fields
+      'firstName', 'lastName', 'email', 'phoneNumber', 'gender', 'dateOfBirth',
+      'address', 'nationalID', 'departmentId', 'position', 'dateOfJoining',
+      'employmentType', 'emergencyContactName', 'emergencyContactPhone',
+      'emergencyContactRelationship', 'maritalStatus' // Include maritalStatus in required fields
     ];
 
     for (const field of requiredFields) {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Auto-generate employeeId (e.g., first 3 characters of firstName + random unique identifier)
+    // Auto-generate employeeId
     const employeeId = `${body.firstName.slice(0, 3).toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`;
 
     // Parse salary as float
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         employeeId, // Use the generated employeeId
         firstName: body.firstName,
         lastName: body.lastName,
-        middleName: body.middleName || '',
+        middleName: body.middleName || '', // Optional field
         email: body.email,
         phoneNumber: body.phoneNumber,
         gender: body.gender,
@@ -67,13 +67,21 @@ export async function POST(request: NextRequest) {
         emergencyContactName: body.emergencyContactName,
         emergencyContactPhone: body.emergencyContactPhone,
         emergencyContactRelationship: body.emergencyContactRelationship,
-        salary,  // Use the parsed salary here
-        currency: body.currency || null,
-        employmentStatus: body.employmentStatus || 'ACTIVE',
-        isProbation: body.isProbation === 'true',
-        probationEndDate: body.probationEndDate ? new Date(body.probationEndDate) : null,
-        contractEndDate: body.contractEndDate ? new Date(body.contractEndDate) : null,
-        maritalStatus: body.maritalStatus,  // Include maritalStatus here
+        bankName: body.bankName || null, // Optional field
+        bankAccountNumber: body.bankAccountNumber || null, // Optional field
+        bankBranch: body.bankBranch || null, // Optional field
+        taxID: body.taxID || null, // Optional field
+        socialSecurityNumber: body.socialSecurityNumber || null, // Optional field
+        salary, // Use the parsed salary
+        currency: body.currency || null, // Optional field
+        isProbation: body.isProbation === 'true', // Boolean field
+        probationEndDate: body.probationEndDate ? new Date(body.probationEndDate) : null, // Optional date
+        contractEndDate: body.contractEndDate ? new Date(body.contractEndDate) : null, // Optional date
+        employmentStatus: body.employmentStatus || 'ACTIVE', // Default to ACTIVE
+        profileImage: body.profileImage || null, // Optional field
+        resumeLink: body.resumeLink || null, // Optional field
+        contractLink: body.contractLink || null, // Optional field
+        identityDocumentLink: body.identityDocumentLink || null, // Optional field
       },
     });
 
