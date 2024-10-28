@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from 'react-toastify'
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ColumnDef } from "@tanstack/react-table"
@@ -16,46 +16,93 @@ import {
 import { Dialog, DialogOverlay, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 
 export type Employee = {
-  employeeId: string; // Using employeeId
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumber: string;
-  position: string;
-  department: { name: string };
-  employmentStatus: "ACTIVE" | "SUSPENDED" | "TERMINATED";
+  employeeId: string
+  firstName: string
+  lastName: string
+  email: string
+  phoneNumber: string
+  position: string
+  department: { name: string }
+  employmentStatus: "ACTIVE" | "SUSPENDED" | "TERMINATED"
 }
 
 export const columns: ColumnDef<Employee>[] = [
   {
+    accessorKey: "employeeId",
+    header: "Employee ID",
+  },
+  {
+    accessorKey: "firstName",
+    header: "First Name",
+  },
+  {
+    accessorKey: "lastName",
+    header: "Last Name",
+  },
+  {
+    accessorKey: "email",
+    header: "Email",
+  },
+  {
+    accessorKey: "phoneNumber",
+    header: "Phone Number",
+  },
+  {
+    accessorKey: "position",
+    header: "Position",
+  },
+  {
+    accessorKey: "department.name",
+    header: "Department",
+  },
+  {
+    accessorKey: "employmentStatus",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.original.employmentStatus
+      return (
+        <Badge
+          variant={status === "ACTIVE" ? "success" : status === "SUSPENDED" ? "warning" : "destructive"}
+        >
+          {status}
+        </Badge>
+      )
+    },
+  },
+  {
     id: "actions",
     cell: ({ row }) => {
-      const employee = row.original;
-      const [isDialogOpen, setDialogOpen] = useState(false);
-      const router = useRouter();
+      const employee = row.original
+      const [isDialogOpen, setDialogOpen] = useState(false)
+      const router = useRouter()
 
       const handleDelete = async () => {
         try {
-          const response = await fetch(`/api/employees/${employee.employeeId}`, { method: 'DELETE' });
+          const response = await fetch(`/api/employees/${employee.employeeId}`, { method: 'DELETE' })
       
           if (!response.ok) {
-            throw new Error('Failed to delete the employee');
+            throw new Error('Failed to delete the employee')
           }
       
-          toast.success("Employee deleted successfully");
-          router.refresh(); // Refresh the page
+          toast.success("Employee deleted successfully")
+          router.refresh() // Refresh the page
       
         } catch (error) {
-          toast.error("Error deleting employee");
-          console.error("Error deleting employee:", error);
+          toast.error("Error deleting employee")
+          console.error("Error deleting employee:", error)
         } finally {
-          setDialogOpen(false);
+          setDialogOpen(false)
         }
-      };
+      }
 
       const handleEdit = () => {
-        console.log("Navigating to edit employee with ID:", employee.employeeId); // Log the employee ID
-        router.push(`/admin/employees/${employee.employeeId}`);
+        console.log("Navigating to edit employee with ID:", employee.employeeId)
+        router.push(`/admin/employees/${employee.employeeId}`)
+      }
+
+      const handleView = () => {
+        console.log("Navigating to view employee with ID:", employee.employeeId)
+        router.push(`/admin/employees/${employee.employeeId}/view`)
       }
 
       return (
@@ -69,9 +116,7 @@ export const columns: ColumnDef<Employee>[] = [
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(employee.employeeId)}>
-                View Employee
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleView}>View Employee</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleEdit}>Edit Employee</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setDialogOpen(true)}>Delete Employee</DropdownMenuItem>
@@ -95,4 +140,4 @@ export const columns: ColumnDef<Employee>[] = [
       )
     },
   },
-];
+]
