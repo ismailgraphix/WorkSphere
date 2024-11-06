@@ -8,55 +8,61 @@ datasource db {
 }
 
 model User {
-  id                String      @id @default(cuid())
-  name              String
-  email             String      @unique
-  password          String
-  role              Role        @default(EMPLOYEE)
-  
+  id       String @id @default(cuid())
+  name     String
+  email    String @unique
+  password String
+  role     Role   @default(EMPLOYEE)
+
   // Relations
-  headedDepartments Department[] @relation("DepartmentHead")
+  headedDepartments  Department[] @relation("DepartmentHead")
   createdDepartments Department[] @relation("DepartmentCreator")
+  createdHolidays    Holiday[]    @relation("HolidayCreator")
+  updatedHolidays    Holiday[]    @relation("HolidayUpdater")
+
+  createdLeaves  Leave[] @relation("LeaveCreatedBy")
+  approvedLeaves Leave[] @relation("LeaveApprovedBy")
 }
 
 model Employee {
-  id                        String   @id @default(uuid()) @unique
-  employeeId                String   @unique
-  firstName                 String
-  lastName                  String
-  middleName                String?
-  email                     String   @unique
-  phoneNumber               String   @unique
-  gender                    String
-  dateOfBirth               DateTime
-  address                   String
-  nationalID                String   @unique
-  departmentId              String
-  department                Department @relation("EmployeeDepartment", fields: [departmentId], references: [id], onDelete: Cascade)
-  position                  String
-  dateOfJoining             DateTime
-  employmentType            EmploymentType 
-  maritalStatus             MaritalStatus  
-  emergencyContactName      String
-  emergencyContactPhone     String
+  id                           String           @id @unique @default(uuid())
+  employeeId                   String           @unique
+  firstName                    String
+  lastName                     String
+  middleName                   String?
+  email                        String           @unique
+  phoneNumber                  String           @unique
+  gender                       String
+  dateOfBirth                  DateTime
+  address                      String
+  nationalID                   String           @unique
+  departmentId                 String
+  department                   Department       @relation("EmployeeDepartment", fields: [departmentId], references: [id], onDelete: Cascade)
+  position                     String
+  dateOfJoining                DateTime
+  employmentType               EmploymentType
+  maritalStatus                MaritalStatus
+  emergencyContactName         String
+  emergencyContactPhone        String
   emergencyContactRelationship String
-  bankName                  String?
-  bankAccountNumber         String?
-  bankBranch                String?
-  taxID                     String?
-  socialSecurityNumber      String?
-  salary                    Float?
-  currency                  Currency?     // NGN, USD, EUR
-  isProbation               Boolean  @default(false)
-  probationEndDate          DateTime?
-  contractEndDate           DateTime?
-  employmentStatus          EmploymentStatus @default(ACTIVE)
-  profileImage              String? 
-  resumeLink                String?
-  contractLink              String?
-  identityDocumentLink      String?
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+  bankName                     String?
+  bankAccountNumber            String?
+  bankBranch                   String?
+  taxID                        String?
+  socialSecurityNumber         String?
+  salary                       Float?
+  currency                     Currency? // NGN, USD, EUR
+  isProbation                  Boolean          @default(false)
+  probationEndDate             DateTime?
+  contractEndDate              DateTime?
+  employmentStatus             EmploymentStatus @default(ACTIVE)
+  profileImage                 String?
+  resumeLink                   String?
+  contractLink                 String?
+  identityDocumentLink         String?
+  createdAt                    DateTime         @default(now())
+  updatedAt                    DateTime         @updatedAt
+  Leave                        Leave[]
 
   @@index([email], name: "email_index")
   @@index([nationalID], name: "nationalID_index")
@@ -75,9 +81,9 @@ enum MaritalStatus {
 }
 
 enum Currency {
-  NGN  
-  USD  
-  EUR  
+  NGN
+  USD
+  EUR
 }
 
 enum EmploymentStatus {
@@ -87,20 +93,71 @@ enum EmploymentStatus {
 }
 
 model Department {
-  id              String     @id @default(uuid()) @unique
-  name            String
-  isActive        Boolean    @default(true)
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  id        String   @id @unique @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   departmentHeadId String?
-  departmentHead   User?     @relation("DepartmentHead", fields: [departmentHeadId], references: [id])
-  
-  employees        Employee[] @relation("EmployeeDepartment")
-  
-  createdById      String
-  createdBy        User @relation("DepartmentCreator", fields: [createdById], references: [id])
+  departmentHead   User?   @relation("DepartmentHead", fields: [departmentHeadId], references: [id])
+
+  employees Employee[] @relation("EmployeeDepartment")
+
+  createdById String
+  createdBy   User   @relation("DepartmentCreator", fields: [createdById], references: [id])
+
+  Leave Leave[]
+}
+
+model Holiday {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  date        DateTime
+  isRecurring Boolean  @default(false) // Indicates if the holiday recurs annually
+  createdById String // References the User who created the holiday
+  updatedById String? // References the User who last updated the holiday
+  createdBy   User     @relation("HolidayCreator", fields: [createdById], references: [id])
+  updatedBy   User?    @relation("HolidayUpdater", fields: [updatedById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date, isRecurring], name: "holiday_date_isRecurring_idx")
+}
+
+model Leave {
+  id          String      @id @default(cuid())
+  startDate   DateTime
+  endDate     DateTime
+  reason      String
+  leaveType   String
+  status      LeaveStatus @default(PENDING)
+  isPaidLeave Boolean     @default(false)
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // Added position and department fields
+  position     String
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("LeaveCreatedBy", fields: [createdById], references: [id])
+
+  approvedById String?
+  approvedBy   User?   @relation("LeaveApprovedBy", fields: [approvedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum Role {

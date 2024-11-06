@@ -13,7 +13,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function ModeToggle() {
-  const { setTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
+
+  React.useEffect(() => {
+    // This ensures the initial theme is set based on the system preference
+    if (theme === undefined) {
+      setTheme('system')
+    }
+  }, [theme, setTheme])
 
   return (
     <DropdownMenu>

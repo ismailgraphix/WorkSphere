@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
         position: body.position,
         dateOfJoining: new Date(body.dateOfJoining),
         employmentType: body.employmentType,
+        maritalStatus: body.maritalStatus,
         emergencyContactName: body.emergencyContactName,
         emergencyContactPhone: body.emergencyContactPhone,
         emergencyContactRelationship: body.emergencyContactRelationship,
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
         probationEndDate: body.probationEndDate ? new Date(body.probationEndDate) : null, // Optional date
         contractEndDate: body.contractEndDate ? new Date(body.contractEndDate) : null, // Optional date
         employmentStatus: body.employmentStatus || 'ACTIVE', // Default to ACTIVE
-        profileImage: body.profileImage || null, // Optional field
+        profileImage: typeof body.profileImage === 'string' ? body.profileImage : null, // Optional field
         resumeLink: body.resumeLink || null, // Optional field
         contractLink: body.contractLink || null, // Optional field
         identityDocumentLink: body.identityDocumentLink || null, // Optional field
@@ -113,14 +114,37 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
     }
 
-    // Fetch all employees from the database
+    // Fetch all employees from the database with salary information
     const employees = await prisma.employee.findMany({
-      include: {
-        department: true, 
+      select: {
+        id: true,
+        employeeId: true,
+        firstName: true,
+        lastName: true,
+        email:true,
+        position:true,
+        employmentStatus: true,
+        phoneNumber: true,
+        profileImage: true,
+        salary: true,
+        department: {
+          select: {
+            name: true,
+          },
+        },
+        // Add any other fields you need for the payroll table
       },
     });
 
-    return NextResponse.json(employees, { status: 200 });
+    // Calculate payroll status (this is a placeholder, replace with your actual logic)
+    const employeesWithPayrollStatus = employees.map(employee => ({
+      ...employee,
+      salaryPerMonth: employee.salary,
+      deduction: 0, // You might want to calculate this based on your business logic
+      status: Math.random() > 0.5 ? 'Completed' : 'Pending', // Placeholder logic
+    }));
+
+    return NextResponse.json(employeesWithPayrollStatus, { status: 200 });
   } catch (error) {
     console.error('Error fetching employees:', error);
     return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });

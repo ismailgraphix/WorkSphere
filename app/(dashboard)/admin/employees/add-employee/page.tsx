@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast"; // Optional: for displaying toasts
+import { useRouter } from "next/navigation";
 
 interface Department {
   id: string;
@@ -19,6 +20,7 @@ export default function EmployeeRegistrationForm() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   // Fetch only active departments
   useEffect(() => {
@@ -98,6 +100,7 @@ export default function EmployeeRegistrationForm() {
           description: "Employee registered successfully.",
           variant: "default",
         });
+        router.push('/admin/employees');
         // Optionally, reset form fields here
       } else {
         toast({

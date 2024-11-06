@@ -24,7 +24,7 @@ const AdminSidebar = () => {
           <span>Dashboard</span>
         </Link>
 
-        <Link href="/admin/employees" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
+        <Link href="admin/employees" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
         <Users />
           <span>Employees</span>
         </Link>
@@ -34,7 +34,7 @@ const AdminSidebar = () => {
           <span>Departments</span>
         </Link>
 
-        <Link href="/payroll" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
+        <Link href="admin/payroll" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
         <HandCoins />
           <span>Payroll</span>
         </Link>
@@ -50,12 +50,12 @@ const AdminSidebar = () => {
         </Link>
 
         {/* New sections for Leave, Holidays, and Jobs */}
-        <Link href="/leave" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
+        <Link href="admin/leave" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
         <TreePalm />
           <span>Leave</span>
         </Link>
 
-        <Link href="/holidays" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
+        <Link href="/admin/holidays" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
         <CalendarCheck />
           <span>Holidays</span>
         </Link>
