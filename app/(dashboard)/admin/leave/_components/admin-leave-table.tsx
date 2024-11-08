@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { format } from "date-fns"
-import { Loader2, Check, X } from "lucide-react"
+import { Loader2,  Eye } from "lucide-react"
 
 interface LeaveApplication {
   id: string
@@ -30,6 +31,8 @@ interface LeaveApplication {
 export default function AdminLeaveTable() {
   const [leaveApplications, setLeaveApplications] = useState<LeaveApplication[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedLeave, setSelectedLeave] = useState<LeaveApplication | null>(null)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -53,22 +56,35 @@ export default function AdminLeaveTable() {
     }
   }
 
-  const handleStatusUpdate = async (id: string, status: 'APPROVED' | 'REJECTED') => {
+  const handleStatusUpdate = async (leaveId: string, employeeId: string, status: 'APPROVED' | 'REJECTED') => {
     try {
-      const response = await fetch(`/api/leave/${id}`, {
+      console.log('Updating leave:', { leaveId, employeeId, status })
+      
+      const response = await fetch(`/api/leave/${employeeId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ 
+          status,
+          leaveId
+        }),
       })
-      if (!response.ok) throw new Error('Failed to update leave application status')
-      await fetchLeaveApplications() // Refresh the list
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update leave application status')
+      }
+
+      await fetchLeaveApplications()
+      setIsViewModalOpen(false)
+      
       toast({
         title: "Success",
         description: `Leave application ${status.toLowerCase()}.`,
       })
     } catch (error) {
+      console.error('Status update error:', error)
       toast({
         title: "Error",
         description: "Failed to update leave application status. Please try again.",
@@ -77,58 +93,133 @@ export default function AdminLeaveTable() {
     }
   }
 
+  const handleViewLeave = (leave: LeaveApplication) => {
+    setSelectedLeave(leave)
+    setIsViewModalOpen(true)
+  }
+
   if (loading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Leave Applications</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Employee</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Start Date</TableHead>
-              <TableHead>End Date</TableHead>
-              <TableHead>Reason</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {leaveApplications.map((leave) => (
-              <TableRow key={leave.id}>
-                <TableCell>{leave.employee.firstName} {leave.employee.lastName}</TableCell>
-                <TableCell>{leave.department.name}</TableCell>
-                <TableCell>{format(new Date(leave.startDate), 'PP')}</TableCell>
-                <TableCell>{format(new Date(leave.endDate), 'PP')}</TableCell>
-                <TableCell>{leave.reason}</TableCell>
-                <TableCell>
-                  <Badge variant={leave.status === 'PENDING' ? 'outline' : leave.status === 'APPROVED' ? 'default' : 'destructive'}>
-                    {leave.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {leave.status === 'PENDING' && (
-                    <div className="flex space-x-2">
-                      <Button size="sm" onClick={() => handleStatusUpdate(leave.id, 'APPROVED')}>
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleStatusUpdate(leave.id, 'REJECTED')}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </TableCell>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Leave Applications</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Employee</TableHead>
+                <TableHead>Department</TableHead>
+                <TableHead>Start Date</TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            </TableHeader>
+            <TableBody>
+              {leaveApplications.map((leave) => (
+                <TableRow key={leave.id}>
+                  <TableCell>{leave.employee.firstName} {leave.employee.lastName}</TableCell>
+                  <TableCell>{leave.department.name}</TableCell>
+                  <TableCell>{format(new Date(leave.startDate), 'PP')}</TableCell>
+                  <TableCell>{format(new Date(leave.endDate), 'PP')}</TableCell>
+                  <TableCell>
+                    <Badge variant={leave.status === 'PENDING' ? 'outline' : leave.status === 'APPROVED' ? 'default' : 'destructive'}>
+                      {leave.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button size="sm" variant="outline" onClick={() => handleViewLeave(leave)}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      View
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Leave Application Details</DialogTitle>
+          </DialogHeader>
+          
+          {selectedLeave && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Employee</label>
+                  <p>{selectedLeave.employee.firstName} {selectedLeave.employee.lastName}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Position</label>
+                  <p>{selectedLeave.employee.position}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Department</label>
+                  <p>{selectedLeave.department.name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Status</label>
+                  <Badge 
+                    variant={
+                      selectedLeave.status === 'PENDING' 
+                        ? 'outline' 
+                        : selectedLeave.status === 'APPROVED' 
+                          ? 'default' 
+                          : 'destructive'
+                    }
+                  >
+                    {selectedLeave.status}
+                  </Badge>
+                </div>
+                <div className="col-span-2">
+                  <label className="text-sm font-medium text-gray-500">Duration</label>
+                  <p>{format(new Date(selectedLeave.startDate), 'PP')} - {format(new Date(selectedLeave.endDate), 'PP')}</p>
+                </div>
+                <div className="col-span-2">
+                  <label className="text-sm font-medium text-gray-500">Reason</label>
+                  <p className="mt-1">{selectedLeave.reason}</p>
+                </div>
+              </div>
+
+              {/* Add action buttons only if status is PENDING */}
+              {selectedLeave.status === 'PENDING' && (
+                <div className="flex justify-end space-x-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleStatusUpdate(
+                      selectedLeave.id,
+                      selectedLeave.employee.id,
+                      'REJECTED'
+                    )}
+                    className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700"
+                  >
+                    Reject Leave
+                  </Button>
+                  <Button
+                    onClick={() => handleStatusUpdate(
+                      selectedLeave.id,
+                      selectedLeave.employee.id,
+                      'APPROVED'
+                    )}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    Approve Leave
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

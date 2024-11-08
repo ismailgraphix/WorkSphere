@@ -1,14 +1,12 @@
 
-//import DashboardHeader from '@/components/header';
-const DashboardLayout = () => {
+import AdminDashboard from './_components/admin-dashboard'
 
+export default function AdminPage() {
   return (
-    <>  
-    <div className="flex">
-      </div>
-      
-        </>
-  );
-};
-
-export default DashboardLayout;
+    
+      <main className="flex-1 overflow-y-auto ">
+        <AdminDashboard />
+      </main>
+  
+  )
+}

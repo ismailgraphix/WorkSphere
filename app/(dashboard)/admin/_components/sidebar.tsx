@@ -39,7 +39,7 @@ const AdminSidebar = () => {
           <span>Payroll</span>
         </Link>
 
-        <Link href="/attendance" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
+        <Link href="admin/attendance" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
         <Clock />
           <span>Attendance</span>
         </Link>
@@ -60,7 +60,7 @@ const AdminSidebar = () => {
           <span>Holidays</span>
         </Link>
 
-        <Link href="/jobs" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
+        <Link href="admin/jobs" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
         <BriefcaseBusiness />
           <span>Jobs</span>
         </Link>

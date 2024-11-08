@@ -1,42 +1,62 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import jwt from 'jsonwebtoken';
+import { NextResponse } from "next/server"
+import { prisma } from "@/lib/db"
+import { cookies } from "next/headers"
+import { getSession } from "@/lib/auth"
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
-
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    const cookies = request.headers.get('cookie');
-    const token = cookies?.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+    // Get the user session
+    const cookieStore = cookies()
+    const session = await getSession(cookieStore)
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized. No token provided.' }, { status: 401 });
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
     }
 
-    let user;
-    try {
-      user = jwt.verify(token, JWT_SECRET);
-      if (typeof user !== 'object' || !user.id) {
-        return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
+    // Get employee ID from the session user
+    const userId = session.user.id
+
+    // First get the employee details
+    const employee = await prisma.employee.findFirst({
+      where: {
+        user_id: userId
       }
-    } catch (error) {
-      return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
+    })
+
+    if (!employee) {
+      return NextResponse.json(
+        { error: "Employee not found" },
+        { status: 404 }
+      )
     }
 
-    const leaveApplications = await prisma.leave.findMany({
-      where: { employeeId: user.id },
+    // Then fetch all leaves for this employee
+    const leaves = await prisma.leave.findMany({
+      where: {
+        employeeId: employee.id
+      },
       include: {
         department: {
           select: {
-            name: true,
-          },
-        },
+            name: true
+          }
+        }
       },
-    });
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
 
-    return NextResponse.json(leaveApplications, { status: 200 });
+    return NextResponse.json(leaves)
+
   } catch (error) {
-    console.error('Error fetching employee leave applications:', error);
-    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
+    console.error('Error fetching employee leaves:', error)
+    return NextResponse.json(
+      { error: "Failed to fetch leave applications" },
+      { status: 500 }
+    )
   }
 }
