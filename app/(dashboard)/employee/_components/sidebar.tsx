@@ -1,7 +1,8 @@
-'use client';
-import Image from 'next/image';
-import Link from 'next/link';
-import logo from '../../../../assets/employee.png';
+'use client'
+
+import Image from 'next/image'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   Calendar,
@@ -11,71 +12,82 @@ import {
   Settings,
   Wallet,
   Building2,
-  CalendarDays
-} from 'lucide-react';
+  CalendarDays,
+} from 'lucide-react'
 
-const Sidebar = () => {
+import { cn } from "@/lib/utils"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+
+export default function Sidebar() {
+  const pathname = usePathname()
+
+  const mainMenuItems = [
+    { href: '/employee', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/employee/leave', icon: Calendar, label: 'Leave Management' },
+    { href: '/employee/holidays', icon: CalendarDays, label: 'Holidays' },
+    { href: '/employee/attendance', icon: Clock, label: 'Attendance' },
+    { href: '/employee/payslips', icon: Wallet, label: 'Payslips' },
+    { href: '/employee/documents', icon: FileText, label: 'Documents' },
+    { href: '/employee/department', icon: Building2, label: 'My Department' },
+  ]
+
+  const accountItems = [
+    { href: '/employee/profile', icon: User, label: 'My Profile' },
+    { href: '/employee/settings', icon: Settings, label: 'Settings' },
+  ]
+
+  const NavItem = ({ href, icon: Icon, label }) => {
+    const isActive = pathname === href
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href={href}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-200 transition-all hover:text-gray-100",
+                isActive ? "bg-gray-700 text-gray-100" : "hover:bg-gray-700"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{label}</span>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>{label}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
+  }
+
   return (
-    <aside className="w-64 bg-gray-800 text-white h-screen p-4">
-      <div className="flex items-center space-x-2 mb-8">
-        <Link href="/employee" className="flex items-center space-x-2">
-          <Image src={logo} alt="Company Logo" className="h-8 w-8" />
-          <h2 className="text-xl font-semibold">Employee Portal</h2>
-        </Link>
+    <aside className="flex h-screen w-64 flex-col bg-gray-800 text-white">
+      <div className="flex items-center gap-2 px-4 py-6">
+        <Image src="/employee.png" alt="Company Logo" width={32} height={32} />
+        <h2 className="text-xl font-semibold">Employee Portal</h2>
       </div>
       
-      <nav className="space-y-4">
-        <h3 className="text-gray-400 uppercase text-xs mb-2">Main Menu</h3>
+      <nav className="flex flex-col flex-1 px-2 py-4">
+        <div className="flex-1">
+          <h3 className="mb-2 px-4 text-xs uppercase text-gray-400">Main Menu</h3>
+          {mainMenuItems.map((item) => (
+            <NavItem key={item.href} {...item} />
+          ))}
+        </div>
         
-        <Link href="/employee/dashboard" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <LayoutDashboard size={20} />
-          <span>Dashboard</span>
-        </Link>
-
-        <Link href="/employee/leave" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <Calendar size={20} />
-          <span>Leave Management</span>
-        </Link>
-
-        <Link href="/employee/holidays" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <CalendarDays size={20} />
-          <span>Holidays</span>
-        </Link>
-
-        <Link href="/employee/attendance" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <Clock size={20} />
-          <span>Attendance</span>
-        </Link>
-
-        <Link href="/employee/payslips" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <Wallet size={20} />
-          <span>Payslips</span>
-        </Link>
-
-        <Link href="/employee/documents" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <FileText size={20} />
-          <span>Documents</span>
-        </Link>
-
-        <Link href="/employee/department" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <Building2 size={20} />
-          <span>My Department</span>
-        </Link>
-
-        <h3 className="text-gray-400 uppercase text-xs mt-4 mb-2">Account</h3>
-        
-        <Link href="/employee/profile" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <User size={20} />
-          <span>My Profile</span>
-        </Link>
-
-        <Link href="/employee/settings" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <Settings size={20} />
-          <span>Settings</span>
-        </Link>
+        <div className="mt-auto pt-4 border-t border-gray-700">
+          <h3 className="mb-2 px-4 text-xs uppercase text-gray-400">Account</h3>
+          {accountItems.map((item) => (
+            <NavItem key={item.href} {...item} />
+          ))}
+        </div>
       </nav>
     </aside>
-  );
-};
-
-export default Sidebar;
+  )
+}
