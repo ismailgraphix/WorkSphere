@@ -1,64 +1,106 @@
-'use client';
-import { Users, Building2, CalendarCheck, HandCoins, Clock, ChartBar, Settings } from 'lucide-react'; // Icons you might use
-import logo from '../../../../assets/employee.png';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Separator } from '@/components/ui/separator';
+'use client'
 
-const HrSidebar = () => {
+import { useState } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import Image from 'next/image'
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { Separator } from "@/components/ui/separator"
+import {
+  Users,
+  Building2,
+  CalendarCheck,
+  HandCoins,
+  Clock,
+  ChartBar,
+  Settings,
+  Menu,
+} from 'lucide-react'
+import logo from '@/assets/employee.png'
+
+const sidebarItems = [
+  { icon: Users, label: 'Dashboard', href: '/hr' },
+  { icon: Users, label: 'Employees', href: '/hr/employees' },
+  { icon: Building2, label: 'Departments', href: '/hr/departments' },
+  { icon: HandCoins, label: 'Payroll', href: '/hr/payroll' },
+  { icon: Clock, label: 'Attendance', href: '/hr/attendance' },
+  { icon: ChartBar, label: 'Reports', href: '/hr/reports' },
+  { icon: CalendarCheck, label: 'Leave Management', href: '/hr/leave' },
+  { icon: Settings, label: 'Settings', href: '/hr/settings' },
+]
+
+export default function HrSidebar() {
+  const pathname = usePathname()
+  const [isCollapsed, setIsCollapsed] = useState(false)
+
   return (
-    <aside className="w-64 bg-gray-800 text-white h-screen p-4">
-      <div className="flex items-center space-x-2 mb-8">
-        {/* Company Logo */}
-        <Link href="/hr">
-          <Image src={logo} alt="Company Logo" className="h-8 w-8 cursor-pointer justify-center" />
-          <h2 className="text-xl font-semibold">EnterpriseHR</h2>
-        </Link>
+    <TooltipProvider delayDuration={0}>
+      <div className={cn(
+        "relative flex flex-col h-screen bg-background border-r",
+        isCollapsed ? "w-[80px]" : "w-64"
+      )}>
+        <div className="flex items-center justify-between p-4">
+          <Link href="/hr" className="flex items-center space-x-2">
+            <Image src={logo} alt="EnterpriseHR Logo" width={32} height={32} />
+            {!isCollapsed && <h2 className="text-xl font-semibold">EnterpriseHR</h2>}
+          </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            <Menu className="h-4 w-4" />
+            <span className="sr-only">Toggle sidebar</span>
+          </Button>
+        </div>
+        <ScrollArea className="flex-1 py-2">
+          <nav className="space-y-1 px-2">
+            {sidebarItems.map((item, index) => (
+              <Tooltip key={item.href} delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "flex items-center space-x-2 rounded-md p-2 hover:bg-accent hover:text-accent-foreground",
+                      pathname === item.href && "bg-accent text-accent-foreground",
+                      isCollapsed && "justify-center"
+                    )}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {!isCollapsed && <span>{item.label}</span>}
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="flex items-center gap-4">
+                  {item.label}
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </nav>
+        </ScrollArea>
+        <Separator className="my-2" />
+        <div className="p-4">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-center"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            {isCollapsed ? <Menu className="h-4 w-4" /> : "Collapse"}
+            <span className="sr-only">
+              {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            </span>
+          </Button>
+        </div>
       </div>
-
-      <nav className="space-y-4">
-        <Link href="/hr" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <Users />
-          <span>Dashboard</span>
-        </Link>
-
-        <Link href="/employees" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <Users />
-          <span>Employees</span>
-        </Link>
-
-        <Link href="/hr/departments" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <Building2 />
-          <span>Departments</span>
-        </Link>
-
-        <Link href="/payroll" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <HandCoins />
-          <span>Payroll</span>
-        </Link>
-
-        <Link href="/attendance" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <Clock />
-          <span>Attendance</span>
-        </Link>
-
-        <Link href="/reports" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <ChartBar />
-          <span>Reports</span>
-        </Link>
-
-        <Link href="/leave" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <CalendarCheck />
-          <span>Leave Management</span>
-        </Link>
-         <Separator/>
-        <Link href="/settings" className="p-2 hover:bg-gray-700 rounded-md flex items-center space-x-2">
-          <Settings />
-          <span>Settings</span>
-        </Link>
-      </nav>
-    </aside>
-  );
-};
-
-export default HrSidebar;
+    </TooltipProvider>
+  )
+}

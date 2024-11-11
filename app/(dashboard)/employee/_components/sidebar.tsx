@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -13,9 +14,13 @@ import {
   Wallet,
   Building2,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Tooltip,
   TooltipContent,
@@ -23,8 +28,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-export default function Sidebar() {
+export default function EmployeeSidebar() {
   const pathname = usePathname()
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   const mainMenuItems = [
     { href: '/employee', icon: LayoutDashboard, label: 'Dashboard' },
@@ -51,11 +57,12 @@ export default function Sidebar() {
               href={href}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-200 transition-all hover:text-gray-100",
-                isActive ? "bg-gray-700 text-gray-100" : "hover:bg-gray-700"
+                isActive ? "bg-gray-700 text-gray-100" : "hover:bg-gray-700",
+                isCollapsed && "justify-center"
               )}
             >
               <Icon className="h-4 w-4" />
-              <span>{label}</span>
+              {!isCollapsed && <span>{label}</span>}
             </Link>
           </TooltipTrigger>
           <TooltipContent side="right">
@@ -67,27 +74,45 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex h-screen w-64 flex-col bg-gray-800 text-white">
-      <div className="flex items-center gap-2 px-4 py-6">
-        <Image src="/employee.png" alt="Company Logo" width={32} height={32} />
-        <h2 className="text-xl font-semibold">Employee Portal</h2>
+    <aside className={cn(
+      "flex h-screen flex-col bg-gray-800 text-white transition-all duration-300 ease-in-out",
+      isCollapsed ? "w-[80px]" : "w-64"
+    )}>
+      <div className="flex items-center justify-between px-4 py-6">
+        <div className="flex items-center gap-2">
+          <Image src="/employee.png" alt="Company Logo" width={32} height={32} />
+          {!isCollapsed && <h2 className="text-xl font-semibold">Employee Portal</h2>}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:bg-gray-700"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        >
+          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          <span className="sr-only">
+            {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          </span>
+        </Button>
       </div>
       
-      <nav className="flex flex-col flex-1 px-2 py-4">
-        <div className="flex-1">
-          <h3 className="mb-2 px-4 text-xs uppercase text-gray-400">Main Menu</h3>
-          {mainMenuItems.map((item) => (
-            <NavItem key={item.href} {...item} />
-          ))}
-        </div>
-        
-        <div className="mt-auto pt-4 border-t border-gray-700">
-          <h3 className="mb-2 px-4 text-xs uppercase text-gray-400">Account</h3>
-          {accountItems.map((item) => (
-            <NavItem key={item.href} {...item} />
-          ))}
-        </div>
-      </nav>
+      <ScrollArea className="flex-1 px-2 py-4">
+        <nav className="flex flex-col flex-1">
+          <div className="flex-1">
+            {!isCollapsed && <h3 className="mb-2 px-4 text-xs uppercase text-gray-400">Main Menu</h3>}
+            {mainMenuItems.map((item) => (
+              <NavItem key={item.href} {...item} />
+            ))}
+          </div>
+          
+          <div className="mt-auto pt-4 border-t border-gray-700">
+            {!isCollapsed && <h3 className="mb-2 px-4 text-xs uppercase text-gray-400">Account</h3>}
+            {accountItems.map((item) => (
+              <NavItem key={item.href} {...item} />
+            ))}
+          </div>
+        </nav>
+      </ScrollArea>
     </aside>
   )
 }
