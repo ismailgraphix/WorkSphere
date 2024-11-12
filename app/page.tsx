@@ -1,4 +1,6 @@
+//import LoginForm from '@/components/login-form'
 import LoginForm from '@/components/login-form'
+import RegisterForm from '@/components/register-form'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -14,7 +16,7 @@ export default function Home() {
         <p className="text-gray-600">Please login to access your dashboard</p>
       </header>
       <main>
-        <LoginForm />
+       <LoginForm/>
       </main>
       <footer className="mt-8 text-center text-sm text-gray-500">
         <p>&copy; 2024 Your Company Name. All rights reserved.</p>
