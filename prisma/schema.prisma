@@ -27,6 +27,8 @@ model User {
 
   createdLeaves  Leave[] @relation("LeaveCreatedBy")
   approvedLeaves Leave[] @relation("LeaveApprovedBy")
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+  
 }
 
 model Job {
@@ -117,6 +119,8 @@ model Employee {
   createdAt                    DateTime         @default(now())
   updatedAt                    DateTime         @updatedAt
   Leave                        Leave[]
+  user                         User?
+  
 
   @@index([email], name: "email_index")
   @@index([nationalID], name: "nationalID_index")

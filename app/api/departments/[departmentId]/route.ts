@@ -5,10 +5,8 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret'; // Ensure this matches the one used in login
 
 export async function PUT(request: NextRequest, { params }: { params: { departmentId: string } }) {
-  const { departmentId } = params;
-
   try {
-    // Extract JWT from cookies
+    const { departmentId } = params;
     const cookies = request.headers.get('cookie');
     const token = cookies?.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
 
@@ -16,35 +14,40 @@ export async function PUT(request: NextRequest, { params }: { params: { departme
       return NextResponse.json({ error: 'Unauthorized. No token provided.' }, { status: 401 });
     }
 
-    let user;
+    let decodedToken;
     try {
-      // Verify and decode the token
-      user = jwt.verify(token, JWT_SECRET);
-      
-      // Check if user is a valid object and has the necessary properties
-      if (typeof user !== 'object' || !user.role || !user.id) {
+      decodedToken = jwt.verify(token, JWT_SECRET) as { employeeId: string, role: string };
+      if (typeof decodedToken !== 'object' || !decodedToken.role || !decodedToken.employeeId) {
         return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
       }
-
     } catch (error) {
       console.error('Token verification failed:', error);
       return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
     }
 
-    // Parse request body for department data
-    const { name, departmentHeadId, isActive } = await request.json();
+    // Parse request body
+    const { name, departmentHeadEmployeeId, isActive } = await request.json();
 
-    if (!name || !departmentHeadId) {
-      return NextResponse.json({ error: 'Name and department head are required.' }, { status: 400 });
+    if (!name || !departmentHeadEmployeeId) {
+      return NextResponse.json({ error: 'Name and department head employee ID are required.' }, { status: 400 });
     }
 
-    // Update the department record
+    // Find the department head user
+    const departmentHead = await prisma.user.findUnique({
+      where: { employeeId: departmentHeadEmployeeId }
+    });
+
+    if (!departmentHead) {
+      return NextResponse.json({ error: 'Department head not found.' }, { status: 404 });
+    }
+
+    // Update the department
     const updatedDepartment = await prisma.department.update({
       where: { id: departmentId },
       data: {
         name,
-        departmentHeadId,
-        isActive, // Handle isActive based on your requirements
+        departmentHeadId: departmentHead.id,
+        isActive: isActive ?? true,
       },
     });
 
@@ -56,10 +59,8 @@ export async function PUT(request: NextRequest, { params }: { params: { departme
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: { departmentId: string } }) {
-  const { departmentId } = params;
-
   try {
-    // Extract JWT from cookies
+    const { departmentId } = params;
     const cookies = request.headers.get('cookie');
     const token = cookies?.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
 
@@ -67,13 +68,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { depar
       return NextResponse.json({ error: 'Unauthorized. No token provided.' }, { status: 401 });
     }
 
-    let user;
+    let decodedToken;
     try {
-      // Verify and decode the token
-      user = jwt.verify(token, JWT_SECRET);
-      
-      // Check if user is a valid object and has the necessary properties
-      if (typeof user !== 'object' || !user.role || !user.id) {
+      decodedToken = jwt.verify(token, JWT_SECRET) as { employeeId: string, role: string };
+      if (typeof decodedToken !== 'object' || !decodedToken.role || !decodedToken.employeeId) {
         return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
       }
     } catch (error) {
@@ -81,12 +79,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { depar
       return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
     }
 
-    // Allow only 'ADMIN' or 'HR' roles to access this route
-    if (user.role !== 'ADMIN' && user.role !== 'HR') {
+    // Allow only 'ADMIN' or 'HR' roles
+    if (decodedToken.role !== 'ADMIN' && decodedToken.role !== 'HR') {
       return NextResponse.json({ error: 'Permission denied. Only Admins and HR can access this resource.' }, { status: 403 });
     }
 
-    // Delete the department
     await prisma.department.delete({
       where: { id: departmentId },
     });

@@ -11,12 +11,14 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
 import { FileUpload } from "../../../../../components/file-upload"
 import Image from "next/image"
+import { EmploymentType, MaritalStatus, Currency, EmploymentStatus } from '@prisma/client'
 
 interface Employee {
   id: string
   employeeId: string
   firstName: string
   lastName: string
+  middleName?: string 
   email: string
   phoneNumber: string
   gender: string
@@ -49,6 +51,7 @@ interface Employee {
 }
 
 interface Department {
+  isActive: any
   id: string
   name: string
 }
@@ -60,11 +63,22 @@ export default function EditEmployeeForm() {
   const { toast } = useToast()
   const params = useParams()
   const router = useRouter()
+  
   const employeeId = params.employeeId as string
-
+  
   useEffect(() => {
     async function fetchEmployeeAndDepartments() {
       try {
+        if (!employeeId) {
+          toast({
+            title: "Error",
+            description: "Employee ID is missing",
+            variant: "destructive",
+          })
+          router.push('/admin/employees')
+          return
+        }
+
         const [employeeRes, departmentsRes] = await Promise.all([
           fetch(`/api/employees/${employeeId}`),
           fetch("/api/departments")
@@ -78,57 +92,72 @@ export default function EditEmployeeForm() {
 
         setEmployee(employeeData)
         setDepartments(departmentsData.filter((dept: Department) => dept.isActive))
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         toast({
           title: "Error",
           description: "Failed to load employee data. Please try again.",
           variant: "destructive",
         })
+        router.push('/admin/employees')
       } finally {
         setLoading(false)
       }
     }
 
     fetchEmployeeAndDepartments()
-  }, [employeeId, toast])
+  }, [employeeId, toast, router])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setLoading(true)
-    const formData = new FormData(event.target as HTMLFormElement)
-
-    // Convert FormData to a plain object
-    const employeeData = Object.fromEntries(formData)
-
-    // Add file URLs to the employeeData
-    if (employee) {
-      employeeData.profileImage = employee.profileImage
-      employeeData.resumeLink = employee.resumeLink
-      employeeData.contractLink = employee.contractLink
-      employeeData.identityDocumentLink = employee.identityDocumentLink
-    }
-
+    
     try {
+      const formElement = event.target as HTMLFormElement
+      const formData = new FormData(formElement)
+      
+      // Create the employee data object with proper typing
+      const employeeData = {
+        ...Object.fromEntries(formData),
+        // Include file URLs
+        profileImage: employee?.profileImage,
+        resumeLink: employee?.resumeLink,
+        contractLink: employee?.contractLink,
+        identityDocumentLink: employee?.identityDocumentLink,
+        // Convert boolean and number fields
+        isProbation: formData.get('isProbation') === 'true',
+        salary: formData.get('salary') ? parseFloat(formData.get('salary') as string) : null,
+        // Ensure enums are properly set
+        employmentType: formData.get('employmentType') as EmploymentType,
+        maritalStatus: formData.get('maritalStatus') as MaritalStatus,
+        currency: formData.get('currency') as Currency || null,
+        employmentStatus: formData.get('employmentStatus') as EmploymentStatus,
+      }
+
+      console.log('Submitting data:', employeeData) // Debug log
+
       const res = await fetch(`/api/employees/${employeeId}`, {
         method: "PUT",
-        body: JSON.stringify(employeeData),
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify(employeeData),
       })
 
-      if (res.ok) {
-        toast({
-          title: "Success",
-          description: "Employee updated successfully.",
-          variant: "default",
-        })
-        router.push('/admin/employees')
-      } else {
-        const error = await res.json()
-        throw new Error(error.message || "Failed to update employee")
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update employee")
       }
+
+      toast({
+        title: "Success",
+        description: "Employee updated successfully.",
+        variant: "default",
+      })
+      router.push('/admin/employees')
     } catch (error) {
+      console.error('Update error:', error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "An error occurred while updating the employee.",
@@ -139,8 +168,42 @@ export default function EditEmployeeForm() {
     }
   }
 
-  const handleFileUpload = (field: keyof Employee) => (url: string) => {
-    setEmployee(prev => prev ? { ...prev, [field]: url } : null)
+  const handleFileUpload = (field: keyof Employee) => async (url: string) => {
+    try {
+      // Update the employee state with the new URL
+      setEmployee(prev => {
+        if (!prev) return null
+        return { ...prev, [field]: url }
+      })
+
+      // Optionally, you can also update the file URL directly in the database
+      const res = await fetch(`/api/employees/${employeeId}`, {
+        method: "PATCH", // Using PATCH for partial updates
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          [field]: url
+        }),
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to update file URL')
+      }
+
+      toast({
+        title: "Success",
+        description: "File uploaded successfully",
+        variant: "default",
+      })
+    } catch (error) {
+      console.error('File upload error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to save file upload. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   if (loading) return <div>Loading...</div>
@@ -155,23 +218,27 @@ export default function EditEmployeeForm() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="firstName">First Name</Label>
+              <Label htmlFor="firstName">First Name <span className="text-red-500">*</span></Label>
               <Input id="firstName" name="firstName" defaultValue={employee.firstName} required />
             </div>
             <div>
-              <Label htmlFor="lastName">Last Name</Label>
+              <Label htmlFor="lastName">Last Name <span className="text-red-500">*</span></Label>
               <Input id="lastName" name="lastName" defaultValue={employee.lastName} required />
             </div>
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="middleName">Middle Name</Label>
+              <Input id="middleName" name="middleName" defaultValue={employee.middleName} />
+            </div>
+            <div>
+              <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
               <Input id="email" name="email" type="email" defaultValue={employee.email} required />
             </div>
             <div>
-              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Label htmlFor="phoneNumber">Phone Number <span className="text-red-500">*</span></Label>
               <Input id="phoneNumber" name="phoneNumber" defaultValue={employee.phoneNumber} required />
             </div>
             <div>
-              <Label htmlFor="gender">Gender</Label>
+              <Label htmlFor="gender">Gender <span className="text-red-500">*</span></Label>
               <Select name="gender" defaultValue={employee.gender}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Gender" />
@@ -184,19 +251,19 @@ export default function EditEmployeeForm() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="dateOfBirth">Date of Birth</Label>
+              <Label htmlFor="dateOfBirth">Date of Birth <span className="text-red-500">*</span></Label>
               <Input id="dateOfBirth" name="dateOfBirth" type="date" defaultValue={employee.dateOfBirth} required />
             </div>
             <div>
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
               <Textarea id="address" name="address" defaultValue={employee.address} required />
             </div>
             <div>
-              <Label htmlFor="nationalID">National ID</Label>
+              <Label htmlFor="nationalID">National ID <span className="text-red-500">*</span></Label>
               <Input id="nationalID" name="nationalID" defaultValue={employee.nationalID} required />
             </div>
             <div>
-              <Label htmlFor="maritalStatus">Marital Status</Label>
+              <Label htmlFor="maritalStatus">Marital Status <span className="text-red-500">*</span></Label>
               <Select name="maritalStatus" defaultValue={employee.maritalStatus}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Marital Status" />
@@ -214,8 +281,16 @@ export default function EditEmployeeForm() {
                 onUpload={handleFileUpload('profileImage')}
                 label="Upload Profile Image"
               />
-              {employee.profileImage && (
-                <Image src={employee.profileImage} alt="Profile" className="mt-2 w-32 h-32 object-cover rounded-full" />
+              {employee?.profileImage && (
+                <div className="mt-2">
+                  <Image 
+                    src={employee.profileImage} 
+                    alt="Profile" 
+                    width={128}
+                    height={128}
+                    className="object-cover rounded-full" 
+                  />
+                </div>
               )}
             </div>
           </div>

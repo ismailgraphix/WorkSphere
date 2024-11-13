@@ -2,76 +2,87 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "../hooks/use-toast"
-import { Loader2 } from "lucide-react"
 
-const formSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters" }),
-})
-
-export default function LoginForm() {
+export default function TwoStepLoginForm() {
+  const [step, setStep] = useState(1)
+  const [emailOrEmployeeId, setEmailOrEmployeeId] = useState('')
+  const [password, setPassword] = useState('')
+  const [employeeId, setEmployeeId] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  })
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const handleStep1Submit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/check-employee', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ emailOrEmployeeId }),
       })
 
       const data = await response.json()
 
       if (response.ok) {
-        localStorage.setItem('user', JSON.stringify(data.user))
-        localStorage.setItem('userId', data.user.id)
+        setEmployeeId(data.employeeId)
+        setStep(2)
+      } else {
+        toast({
+          title: "Error",
+          description: data.message,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Check employee error:', error)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
+  const handleStep2Submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employeeId, password }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
         toast({
           title: "Login Successful",
           description: "Welcome back!",
         })
-
-        switch (data.user.role) {
-          case 'ADMIN':
-            router.push('/admin')
-            break
-          case 'HR':
-            router.push('/hr')
-            break
-          case 'EMPLOYEE':
-            router.push('/employee')
-            break
-          default:
-            router.push('/')
-        }
+        router.push('/dashboard') // Redirect to dashboard or appropriate page
       } else {
-        throw new Error(data.message || 'Login failed')
+        toast({
+          title: "Login Failed",
+          description: data.message,
+          variant: "destructive",
+        })
       }
     } catch (error) {
+      console.error('Login error:', error)
       toast({
-        title: "Login Failed",
-        description: error instanceof Error ? error.message : "An error occurred. Please try again.",
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -80,60 +91,56 @@ export default function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
-        <CardDescription className="text-center">Enter your credentials to access your account</CardDescription>
+        <CardTitle>Login</CardTitle>
+        <CardDescription>
+          {step === 1
+            ? "Enter your email or employee ID to proceed."
+            : "Enter your password to complete login."}
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter your email" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="Enter your password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Logging in...
-                </>
-              ) : (
-                'Login'
-              )}
-            </Button>
+        {step === 1 ? (
+          <form onSubmit={handleStep1Submit}>
+            <div className="grid w-full items-center gap-4">
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="emailOrEmployeeId">Email or Employee ID</Label>
+                <Input
+                  id="emailOrEmployeeId"
+                  placeholder="Enter your email or employee ID"
+                  value={emailOrEmployeeId}
+                  onChange={(e) => setEmailOrEmployeeId(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
           </form>
-        </Form>
+        ) : (
+          <form onSubmit={handleStep2Submit}>
+            <div className="grid w-full items-center gap-4">
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          </form>
+        )}
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-gray-500">
-          Don't have an account?{" "}
-          <a href="/register" className="text-blue-500 hover:underline">
-            Register here
-          </a>
-        </p>
+      <CardFooter className="flex justify-between">
+        {step === 2 && (
+          <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
+        )}
+        <Button type="submit" disabled={isLoading} onClick={step === 1 ? handleStep1Submit : handleStep2Submit}>
+          {isLoading ? "Processing..." : (step === 1 ? "Next" : "Login")}
+        </Button>
       </CardFooter>
     </Card>
   )

@@ -45,7 +45,7 @@ const sidebarItems = [
 ]
 
 const settingsItems = [
-  { icon: Settings, label: 'Settings', href: '/admin/settings' },
+  { icon: Settings, label: 'Settings', href: '/settings' },
   { icon: UserPlus, label: 'Users', href: '/admin/users' },
 ]
 
