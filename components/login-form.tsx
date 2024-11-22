@@ -29,6 +29,9 @@ export default function LoginForm() {
       const data = await response.json()
 
       if (response.ok) {
+        // Store user data in local storage
+        localStorage.setItem('user', JSON.stringify(data.user));
+
         toast({
           title: "Login Successful",
           description: "Welcome back!",
