@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
   } catch (error) {
     // Token invalid/expired
     console.error('Token validation failed:', error);
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/', request.url))
   }
 }
 

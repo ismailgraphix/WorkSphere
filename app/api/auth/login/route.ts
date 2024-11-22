@@ -1,86 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { sign } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';  // Make sure to set this in your environment variables
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { employeeId, password } = body;
+    const { emailOrEmployeeId, password } = body;
 
-    if (!employeeId || !password) {
-      return NextResponse.json(
-        { message: 'Missing required fields: employeeId and password' },
-        { status: 400 }
-      );
+    // Validate input
+    if (!emailOrEmployeeId || !password) {
+      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
-    const employee = await prisma.employee.findUnique({
-      where: { employeeId: employeeId },
-      select: {
-        id: true,
-        email: true,
-        employeeId: true,
-        firstName: true,
-        lastName: true,
-        position: true,
+    // Check if the user exists
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: emailOrEmployeeId },
+          { employeeId: emailOrEmployeeId },
+        ],
       },
-    });
-
-    if (!employee) {
-      return NextResponse.json({ message: 'Employee not found' }, { status: 404 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: employee.email },
     });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
 
-    const token = sign(
+    // Generate JWT token
+    const token = jwt.sign(
       {
-        userId: user.id,
+        id: user.id,
         email: user.email,
-        employeeId: employee.employeeId,
+        employeeId: user.employeeId,
+        role: user.role
       },
-      process.env.JWT_SECRET || '',
-      { expiresIn: '1d' }
+      JWT_SECRET,
+      { expiresIn: '11h' }  // Token expiration (11 hours)
     );
 
+    // Create the response
     const response = NextResponse.json(
       {
         message: 'Login successful',
         user: {
           id: user.id,
+          name: user.name,
           email: user.email,
-          employeeId: employee.employeeId,
-          firstName: employee.firstName,
-          lastName: employee.lastName,
-          position: employee.position,
-        },
+          employeeId: user.employeeId,
+          position: user.position,
+          role: user.role,
+          profileImage: user.profileImage
+        }
       },
       { status: 200 }
     );
 
+    // Set the token in an HTTP-only cookie
     response.cookies.set({
       name: 'token',
       value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 86400, // 1 day in seconds
+      maxAge: 39600, // 11 hours in seconds
+      path: '/',
     });
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json(
-      { message: 'Something went wrong during login' },
-      { status: 500 }
-    );
+    console.error('Error logging in:', error);
+    return NextResponse.json({ message: 'Something went wrong' }, { status: 500 });
   }
 }

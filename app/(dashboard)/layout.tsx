@@ -5,6 +5,7 @@ import DashboardHeader from "@/components/header"
 import AdminSidebar from "./admin/_components/sidebar"
 import HrSidebar from "./hr/_components/sidebar"
 import Sidebar from "./employee/_components/sidebar"
+import { Loader2 } from "lucide-react"
 
 export default function DashboardLayout({
   children,
@@ -44,11 +45,7 @@ export default function DashboardLayout({
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p>Loading...</p>
-      </div>
-    )
+    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
   }
 
   if (!userRole) {

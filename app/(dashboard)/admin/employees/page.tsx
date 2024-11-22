@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DataTable } from "./_components/data-table";
 import { columns } from "./_components/columns";
 import { Employee } from "./_components/columns";
+import { Loader2 } from "lucide-react";
 
 export default function EmployeePage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -27,7 +28,7 @@ export default function EmployeePage() {
   }, []);
 
   if (loading) {
-    return <p>Loading employees...</p>;
+    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
   }
 
   return (

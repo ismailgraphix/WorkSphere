@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
-import { Search, Plus } from "lucide-react"
+import { Search, Plus, Loader2 } from "lucide-react"
 
 interface Holiday {
   id: string
@@ -84,7 +84,10 @@ export default function HolidayManager() {
     return matchesSearch && (showPastHolidays || !isPast)
   })
 
-  if (loading) return <div>Loading...</div>
+  
+  if (loading) {
+    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
+  }
 
   return (
     <div className="space-y-4">
