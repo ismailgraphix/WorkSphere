@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
+import { Loader2 } from "lucide-react"
 
 interface Employee {
   id: string
@@ -63,7 +64,9 @@ export default function ViewEmployeePage() {
     fetchEmployee()
   }, [employeeId, toast])
 
-  if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>
+  if (loading) {
+    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
+  }
   if (!employee) return <div className="flex justify-center items-center h-screen">Employee not found</div>
 
   return (

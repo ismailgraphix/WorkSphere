@@ -7,8 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useToast } from "@/hooks/use-toast"; // Optional: for displaying toasts
+import { useToast } from "../../../../../hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { FileUpload } from "@/components/file-upload";
+import { Card, CardContent } from "@/components/ui/card";
+import { Upload, File } from 'lucide-react';
+import Image from "next/image";
 
 interface Department {
   id: string;
@@ -19,17 +23,48 @@ interface Department {
 export default function EmployeeRegistrationForm() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
+  const [employeeData, setEmployeeData] = useState({
+    firstName: '',
+    lastName: '',
+    middleName: '',
+    email: '',
+    phoneNumber: '',
+    gender: '',
+    dateOfBirth: '',
+    address: '',
+    nationalID: '',
+    maritalStatus: '',
+    departmentId: '',
+    position: '',
+    dateOfJoining: '',
+    employmentType: '',
+    employmentStatus: 'ACTIVE',
+    salary: '',
+    currency: '',
+    isProbation: 'false',
+    probationEndDate: '',
+    contractEndDate: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    emergencyContactRelationship: '',
+    bankName: '',
+    bankAccountNumber: '',
+    bankBranch: '',
+    taxID: '',
+    socialSecurityNumber: '',
+    profileImage: '',
+    resumeLink: '',
+    contractLink: '',
+    identityDocumentLink: '',
+  });
   const { toast } = useToast();
   const router = useRouter();
 
-  // Fetch only active departments
   useEffect(() => {
     async function fetchDepartments() {
       try {
         const res = await fetch("/api/departments");
         const data = await res.json();
-
-        // Filter to include only active departments
         const activeDepartments = data.filter((dept: Department) => dept.isActive);
         setDepartments(activeDepartments);
       } catch (error) {
@@ -42,77 +77,54 @@ export default function EmployeeRegistrationForm() {
     }
 
     fetchDepartments();
-  }, []);
+  }, [toast]);
 
-  // Form submission logic
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEmployeeData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string) => (value: string) => {
+    setEmployeeData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileUpload = (field: string) => async (url: string) => {
+    setEmployeeData(prev => ({ ...prev, [field]: url }));
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
-    const formData = new FormData(event.target as HTMLFormElement);
+
+    console.log('Employee Form Data:', employeeData); // Log the form data
 
     try {
       const res = await fetch("/api/employees", {
         method: "POST",
-        body: JSON.stringify({
-          firstName: formData.get("firstName"),
-          lastName: formData.get("lastName"),
-          middleName: formData.get("middleName"),
-          email: formData.get("email"),
-          phoneNumber: formData.get("phoneNumber"),
-          gender: formData.get("gender"),
-          dateOfBirth: formData.get("dateOfBirth"),
-          address: formData.get("address"),
-          nationalID: formData.get("nationalID"),
-          departmentId: formData.get("department"),
-          position: formData.get("position"),
-          dateOfJoining: formData.get("dateOfJoining"),
-          employmentType: formData.get("employmentType"),
-          maritalStatus: formData.get("maritalStatus"),
-          emergencyContactName: formData.get("emergencyContactName"),
-          emergencyContactPhone: formData.get("emergencyContactPhone"),
-          emergencyContactRelationship: formData.get("emergencyContactRelationship"),
-          salary: formData.get("salary"),
-          currency: formData.get("currency"),
-          employmentStatus: formData.get("employmentStatus"),
-          isProbation: formData.get("isProbation"),
-          probationEndDate: formData.get("probationEndDate"),
-          contractEndDate: formData.get("contractEndDate"),
-          bankName: formData.get("bankName"),
-          bankAccountNumber: formData.get("bankAccountNumber"),
-          bankBranch: formData.get("bankBranch"),
-          taxID: formData.get("taxID"),
-          socialSecurityNumber: formData.get("socialSecurityNumber"),
-          profileImage: formData.get("profileImage"),  // Add this line
-          resumeLink: formData.get("resumeLink"),      // Add this line
-          contractLink: formData.get("contractLink"),   // Add this line
-          identityDocumentLink: formData.get("identityDocumentLink"), // Add this line
-        }),
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify(employeeData),
       });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to register employee');
+      }
 
       const result = await res.json();
 
-      if (res.ok) {
-        toast({
-          title: "Success",
-          description: "Employee registered successfully.",
-          variant: "default",
-        });
-        router.push('/admin/employees');
-        // Optionally, reset form fields here
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to register employee.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Success",
+        description: "Employee registered successfully.",
+        variant: "default",
+      });
+      router.push('/admin/employees');
     } catch (error) {
+      console.error('Error submitting form:', error);
       toast({
         title: "Error",
-        description: "An error occurred while submitting the form.",
+        description: error instanceof Error ? error.message : "An error occurred while submitting the form.",
         variant: "destructive",
       });
     } finally {
@@ -130,60 +142,61 @@ export default function EmployeeRegistrationForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="firstName">First Name <span className="text-red-500">*</span></Label>
-              <Input id="firstName" name="firstName" placeholder="First Name" required />
+              <Input id="firstName" name="firstName" value={employeeData.firstName} onChange={handleInputChange} required />
             </div>
 
             <div>
               <Label htmlFor="lastName">Last Name <span className="text-red-500">*</span></Label>
-              <Input id="lastName" name="lastName" placeholder="Last Name" required />
+              <Input id="lastName" name="lastName" value={employeeData.lastName} onChange={handleInputChange} required />
             </div>
 
             <div>
               <Label htmlFor="middleName">Middle Name</Label>
-              <Input id="middleName" name="middleName" placeholder="Middle Name" />
+              <Input id="middleName" name="middleName" value={employeeData.middleName} onChange={handleInputChange} />
             </div>
 
             <div>
               <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-              <Input id="email" name="email" type="email" placeholder="Email" required />
+              <Input id="email" name="email" type="email" value={employeeData.email} onChange={handleInputChange} required />
             </div>
 
             <div>
               <Label htmlFor="phoneNumber">Phone Number <span className="text-red-500">*</span></Label>
-              <Input id="phoneNumber" name="phoneNumber" placeholder="Phone Number" required />
+              <Input id="phoneNumber" name="phoneNumber" value={employeeData.phoneNumber} onChange={handleInputChange} required />
             </div>
 
             <div>
               <Label htmlFor="gender">Gender <span className="text-red-500">*</span></Label>
-              <Select name="gender" required>
+              <Select name="gender" value={employeeData.gender} onValueChange={handleSelectChange("gender")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Gender" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="male">Male</SelectItem>
                   <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
               <Label htmlFor="dateOfBirth">Date of Birth <span className="text-red-500">*</span></Label>
-              <Input id="dateOfBirth" name="dateOfBirth" type="date" required />
+              <Input id="dateOfBirth" name="dateOfBirth" type="date" value={employeeData.dateOfBirth} onChange={handleInputChange} required />
             </div>
 
             <div>
               <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
-              <Textarea id="address" name="address" placeholder="Address" required />
+              <Textarea id="address" name="address" value={employeeData.address} onChange={handleInputChange} required />
             </div>
 
             <div>
               <Label htmlFor="nationalID">National ID <span className="text-red-500">*</span></Label>
-              <Input id="nationalID" name="nationalID" placeholder="National ID" required />
+              <Input id="nationalID" name="nationalID" value={employeeData.nationalID} onChange={handleInputChange} required />
             </div>
 
             <div>
               <Label htmlFor="maritalStatus">Marital Status <span className="text-red-500">*</span></Label>
-              <Select name="maritalStatus" required>
+              <Select name="maritalStatus" value={employeeData.maritalStatus} onValueChange={handleSelectChange("maritalStatus")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Marital Status" />
                 </SelectTrigger>
@@ -193,6 +206,33 @@ export default function EmployeeRegistrationForm() {
                   <SelectItem value="DIVORCED">Divorced</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="md:col-span-2">
+              <Label htmlFor="profileImage">Profile Image</Label>
+              <Card className="mt-2">
+                <CardContent className="flex items-center space-x-4 p-4">
+                  {employeeData.profileImage ? (
+                    <Image 
+                      src={employeeData.profileImage} 
+                      alt="Profile" 
+                      width={100}
+                      height={100}
+                      className="rounded-full object-cover" 
+                    />
+                  ) : (
+                    <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
+                      <Upload className="h-8 w-8 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="flex-grow">
+                    <FileUpload
+                      onUpload={handleFileUpload('profileImage')}
+                      label="Upload Profile Image"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
@@ -204,7 +244,12 @@ export default function EmployeeRegistrationForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="department">Department <span className="text-red-500">*</span></Label>
-              <Select name="department" required>
+              <Select 
+                name="departmentId" 
+                value={employeeData.departmentId} 
+                onValueChange={handleSelectChange("departmentId")}
+                required
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select Department" />
                 </SelectTrigger>
@@ -220,17 +265,17 @@ export default function EmployeeRegistrationForm() {
 
             <div>
               <Label htmlFor="position">Position <span className="text-red-500">*</span></Label>
-              <Input id="position" name="position" placeholder="Position" required />
+              <Input id="position" name="position" value={employeeData.position} onChange={handleInputChange} required />
             </div>
 
             <div>
               <Label htmlFor="dateOfJoining">Date of Joining <span className="text-red-500">*</span></Label>
-              <Input id="dateOfJoining" name="dateOfJoining" type="date" required />
+              <Input id="dateOfJoining" name="dateOfJoining" type="date" value={employeeData.dateOfJoining} onChange={handleInputChange} required />
             </div>
 
             <div>
               <Label htmlFor="employmentType">Employment Type <span className="text-red-500">*</span></Label>
-              <Select name="employmentType" required>
+              <Select name="employmentType" value={employeeData.employmentType} onValueChange={handleSelectChange("employmentType")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Employment Type" />
                 </SelectTrigger>
@@ -244,12 +289,12 @@ export default function EmployeeRegistrationForm() {
 
             <div>
               <Label htmlFor="salary">Salary</Label>
-              <Input id="salary" name="salary" type="number" placeholder="Salary" />
+              <Input id="salary" name="salary" type="number" value={employeeData.salary} onChange={handleInputChange} />
             </div>
 
             <div>
               <Label htmlFor="currency">Currency</Label>
-              <Select name="currency">
+              <Select name="currency" value={employeeData.currency} onValueChange={handleSelectChange("currency")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Currency" />
                 </SelectTrigger>
@@ -263,7 +308,7 @@ export default function EmployeeRegistrationForm() {
 
             <div>
               <Label htmlFor="employmentStatus">Employment Status <span className="text-red-500">*</span></Label>
-              <Select name="employmentStatus" required>
+              <Select name="employmentStatus" value={employeeData.employmentStatus} onValueChange={handleSelectChange("employmentStatus")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Employment Status" />
                 </SelectTrigger>
@@ -277,7 +322,7 @@ export default function EmployeeRegistrationForm() {
 
             <div>
               <Label htmlFor="isProbation">Is on Probation?</Label>
-              <Select name="isProbation">
+              <Select name="isProbation" value={employeeData.isProbation} onValueChange={handleSelectChange("isProbation")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
@@ -290,71 +335,88 @@ export default function EmployeeRegistrationForm() {
 
             <div>
               <Label htmlFor="probationEndDate">Probation End Date</Label>
-              <Input id="probationEndDate" name="probationEndDate" type="date" />
+              <Input id="probationEndDate" name="probationEndDate" type="date" value={employeeData.probationEndDate} onChange={handleInputChange} />
             </div>
 
             <div>
               <Label htmlFor="contractEndDate">Contract End Date</Label>
-              <Input id="contractEndDate" name="contractEndDate" type="date" />
+              <Input id="contractEndDate" name="contractEndDate" type="date" value={employeeData.contractEndDate} onChange={handleInputChange} />
             </div>
-            <div>
-  <Label htmlFor="profileImage">Profile Image</Label>
-  <Input id="profileImage" name="profileImage" type="file" accept="image/*" />
-</div>
 
-<div>
-  <Label htmlFor="resumeLink">Resume Link</Label>
-  <Input id="resumeLink" name="resumeLink" placeholder="Resume Link" />
-</div>
-
-<div>
-  <Label htmlFor="contractLink">Contract Link</Label>
-  <Input id="contractLink" name="contractLink" placeholder="Contract Link" />
-</div>
-
-<div>
-  <Label htmlFor="identityDocumentLink">Identity Document Link</Label>
-  <Input id="identityDocumentLink" name="identityDocumentLink" placeholder="Identity Document Link" />
-</div>
+            {/* Document Upload Section */}
+            <div className="md:col-span-2 space-y-4">
+              <h4 className="text-md font-medium">Documents</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {['resumeLink', 'contractLink', 'identityDocumentLink'].map((docType) => (
+                  <Card key={docType}>
+                    <CardContent className="p-4">
+                      <Label htmlFor={docType} className="font-medium mb-2 block">
+                        {docType === 'resumeLink' ? 'Resume' : 
+                         docType === 'contractLink' ? 'Contract' : 'Identity Document'}
+                      </Label>
+                      {employeeData[docType as keyof typeof employeeData] ? (
+                        <div className="flex items-center space-x-2">
+                          <File className="h-6 w-6 text-blue-500" />
+                          <a 
+                            href={employeeData[docType as keyof typeof employeeData]} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-blue-500 hover:underline text-sm"
+                          >
+                            View Document
+                          </a>
+                        </div>
+                      ) : (
+                        <FileUpload
+                          onUpload={handleFileUpload(docType)}
+                          label={`Upload ${docType === 'resumeLink' ? 'Resume' : 
+                                          docType === 'contractLink' ? 'Contract' : 'Identity Document'}`}
+                        />
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
 
             <div>
               <Label htmlFor="emergencyContactName">Emergency Contact Name <span className="text-red-500">*</span></Label>
-              <Input id="emergencyContactName" name="emergencyContactName" placeholder="Emergency Contact Name" required />
+              <Input id="emergencyContactName" name="emergencyContactName" value={employeeData.emergencyContactName} onChange={handleInputChange} required />
             </div>
 
             <div>
               <Label htmlFor="emergencyContactPhone">Emergency Contact Phone <span className="text-red-500">*</span></Label>
-              <Input id="emergencyContactPhone" name="emergencyContactPhone" placeholder="Emergency Contact Phone" required />
+              <Input id="emergencyContactPhone" name="emergencyContactPhone" value={employeeData.emergencyContactPhone} onChange={handleInputChange} required />
             </div>
 
             <div>
               <Label htmlFor="emergencyContactRelationship">Emergency Contact Relationship <span className="text-red-500">*</span></Label>
-              <Input id="emergencyContactRelationship" name="emergencyContactRelationship" placeholder="Emergency Contact Relationship" required />
+              <Input id="emergencyContactRelationship" name="emergencyContactRelationship" value={employeeData.emergencyContactRelationship} onChange={handleInputChange} required />
             </div>
 
             <div>
               <Label htmlFor="bankName">Bank Name</Label>
-              <Input id="bankName" name="bankName" placeholder="Bank Name" />
+              <Input id="bankName" name="bankName" value={employeeData.bankName} onChange={handleInputChange} />
             </div>
 
             <div>
               <Label htmlFor="bankAccountNumber">Bank Account Number</Label>
-              <Input id="bankAccountNumber" name="bankAccountNumber" placeholder="Bank Account Number" />
+              <Input id="bankAccountNumber" name="bankAccountNumber" value={employeeData.bankAccountNumber} onChange={handleInputChange} />
             </div>
 
             <div>
               <Label htmlFor="bankBranch">Bank Branch</Label>
-              <Input id="bankBranch" name="bankBranch" placeholder="Bank Branch" />
+              <Input id="bankBranch" name="bankBranch" value={employeeData.bankBranch} onChange={handleInputChange} />
             </div>
 
             <div>
               <Label htmlFor="taxID">Tax ID</Label>
-              <Input id="taxID" name="taxID" placeholder="Tax ID" />
+              <Input id="taxID" name="taxID" value={employeeData.taxID} onChange={handleInputChange} />
             </div>
 
             <div>
               <Label htmlFor="socialSecurityNumber">Social Security Number</Label>
-              <Input id="socialSecurityNumber" name="socialSecurityNumber" placeholder="Social Security Number" />
+              <Input id="socialSecurityNumber" name="socialSecurityNumber" value={employeeData.socialSecurityNumber} onChange={handleInputChange} />
             </div>
           </div>
         </div>

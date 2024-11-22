@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useToast } from "@/hooks/use-toast"
-import { FileUpload } from "../../../../../components/file-upload"
+import { useToast } from "../../../../../hooks/use-toast"
+import { FileUpload } from "@/components/file-upload"
 import Image from "next/image"
 import { EmploymentType, MaritalStatus, Currency, EmploymentStatus } from '@prisma/client'
+import { Loader2, Upload, File, X } from 'lucide-react'
+import { Card, CardContent } from "@/components/ui/card"
 
 interface Employee {
   id: string
@@ -51,9 +53,9 @@ interface Employee {
 }
 
 interface Department {
-  isActive: any
   id: string
   name: string
+  isActive: boolean
 }
 
 export default function EditEmployeeForm() {
@@ -92,7 +94,6 @@ export default function EditEmployeeForm() {
 
         setEmployee(employeeData)
         setDepartments(departmentsData.filter((dept: Department) => dept.isActive))
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         toast({
           title: "Error",
@@ -116,25 +117,19 @@ export default function EditEmployeeForm() {
       const formElement = event.target as HTMLFormElement
       const formData = new FormData(formElement)
       
-      // Create the employee data object with proper typing
       const employeeData = {
         ...Object.fromEntries(formData),
-        // Include file URLs
         profileImage: employee?.profileImage,
         resumeLink: employee?.resumeLink,
         contractLink: employee?.contractLink,
         identityDocumentLink: employee?.identityDocumentLink,
-        // Convert boolean and number fields
         isProbation: formData.get('isProbation') === 'true',
         salary: formData.get('salary') ? parseFloat(formData.get('salary') as string) : null,
-        // Ensure enums are properly set
         employmentType: formData.get('employmentType') as EmploymentType,
         maritalStatus: formData.get('maritalStatus') as MaritalStatus,
         currency: formData.get('currency') as Currency || null,
         employmentStatus: formData.get('employmentStatus') as EmploymentStatus,
       }
-
-      console.log('Submitting data:', employeeData) // Debug log
 
       const res = await fetch(`/api/employees/${employeeId}`, {
         method: "PUT",
@@ -170,15 +165,13 @@ export default function EditEmployeeForm() {
 
   const handleFileUpload = (field: keyof Employee) => async (url: string) => {
     try {
-      // Update the employee state with the new URL
       setEmployee(prev => {
         if (!prev) return null
         return { ...prev, [field]: url }
       })
 
-      // Optionally, you can also update the file URL directly in the database
       const res = await fetch(`/api/employees/${employeeId}`, {
-        method: "PATCH", // Using PATCH for partial updates
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
@@ -206,7 +199,9 @@ export default function EditEmployeeForm() {
     }
   }
 
-  if (loading) return <div>Loading...</div>
+  if (loading) {
+    return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
+  }
   if (!employee) return <div>Employee not found</div>
 
   return (
@@ -275,23 +270,31 @@ export default function EditEmployeeForm() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="md:col-span-2">
               <Label htmlFor="profileImage">Profile Image</Label>
-              <FileUpload
-                onUpload={handleFileUpload('profileImage')}
-                label="Upload Profile Image"
-              />
-              {employee?.profileImage && (
-                <div className="mt-2">
-                  <Image 
-                    src={employee.profileImage} 
-                    alt="Profile" 
-                    width={128}
-                    height={128}
-                    className="object-cover rounded-full" 
-                  />
-                </div>
-              )}
+              <Card className="mt-2">
+                <CardContent className="flex items-center space-x-4 p-4">
+                  {employee?.profileImage ? (
+                    <Image 
+                      src={employee.profileImage} 
+                      alt="Profile" 
+                      width={100}
+                      height={100}
+                      className="rounded-full object-cover" 
+                    />
+                  ) : (
+                    <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
+                      <Upload className="h-8 w-8 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="flex-grow">
+                    <FileUpload
+                      onUpload={handleFileUpload('profileImage')}
+                      label="Upload Profile Image"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
@@ -385,41 +388,54 @@ export default function EditEmployeeForm() {
               <Label htmlFor="contractEndDate">Contract End Date</Label>
               <Input id="contractEndDate" name="contractEndDate" type="date" defaultValue={employee.contractEndDate} />
             </div>
-            <div>
-              <Label htmlFor="resumeLink">Resume</Label>
-              <FileUpload
-                onUpload={handleFileUpload('resumeLink')}
-                label="Upload Resume"
-              />
-              {employee.resumeLink && (
-                <a href={employee.resumeLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                  View Resume
-                </a>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="contractLink">Contract</Label>
-              <FileUpload
-                onUpload={handleFileUpload('contractLink')}
-                label="Upload Contract"
-              />
-              {employee.contractLink && (
-                <a href={employee.contractLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                  View Contract
-                </a>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="identityDocumentLink">Identity Document</Label>
-              <FileUpload
-                onUpload={handleFileUpload('identityDocumentLink')}
-                label="Upload Identity Document"
-              />
-              {employee.identityDocumentLink && (
-                <a href={employee.identityDocumentLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                  View Identity Document
-                </a>
-              )}
+            {/* Document Upload Section */}
+            <div className="md:col-span-2 space-y-4">
+              <h4 className="text-md font-medium">Documents</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {['resumeLink', 'contractLink', 'identityDocumentLink'].map((docType) => (
+                  <Card key={docType}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <Label htmlFor={docType} className="font-medium">
+                          {docType === 'resumeLink' ? 'Resume' : 
+                           docType === 'contractLink' ? 'Contract' : 'Identity Document'}
+                        </Label>
+                        {employee[docType as keyof Employee] && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEmployee(prev => prev ? {...prev, [docType]: null} : null)
+                              // You might want to add an API call here to remove the document from the server
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      {employee[docType as keyof Employee] ? (
+                        <div className="flex items-center space-x-2">
+                          <File className="h-6 w-6 text-blue-500" />
+                          <a 
+                            href={employee[docType as keyof Employee] as string} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-blue-500 hover:underline text-sm"
+                          >
+                            View Document
+                          </a>
+                        </div>
+                      ) : (
+                        <FileUpload
+                          onUpload={handleFileUpload(docType as keyof Employee)}
+                          label={`Upload ${docType === 'resumeLink' ? 'Resume' : 
+                                          docType === 'contractLink' ? 'Contract' : 'Identity Document'}`}
+                        />
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           </div>
         </div>

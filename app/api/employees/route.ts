@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db'; // Assuming you have Prisma setup
+import { prisma } from '@/lib/db';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
@@ -26,13 +26,14 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
+    console.log('Received data:', body); // Log received data for debugging
 
     // Validation
     const requiredFields = [
       'firstName', 'lastName', 'email', 'phoneNumber', 'gender', 'dateOfBirth',
       'address', 'nationalID', 'departmentId', 'position', 'dateOfJoining',
       'employmentType', 'emergencyContactName', 'emergencyContactPhone',
-      'emergencyContactRelationship', 'maritalStatus' // Include maritalStatus in required fields
+      'emergencyContactRelationship', 'maritalStatus'
     ];
 
     for (const field of requiredFields) {
@@ -50,10 +51,10 @@ export async function POST(request: NextRequest) {
     // Create employee in the database using Prisma
     const employee = await prisma.employee.create({
       data: {
-        employeeId, // Use the generated employeeId
+        employeeId,
         firstName: body.firstName,
         lastName: body.lastName,
-        middleName: body.middleName || '', // Optional field
+        middleName: body.middleName || '',
         email: body.email,
         phoneNumber: body.phoneNumber,
         gender: body.gender,
@@ -68,31 +69,30 @@ export async function POST(request: NextRequest) {
         emergencyContactName: body.emergencyContactName,
         emergencyContactPhone: body.emergencyContactPhone,
         emergencyContactRelationship: body.emergencyContactRelationship,
-        bankName: body.bankName || null, // Optional field
-        bankAccountNumber: body.bankAccountNumber || null, // Optional field
-        bankBranch: body.bankBranch || null, // Optional field
-        taxID: body.taxID || null, // Optional field
-        socialSecurityNumber: body.socialSecurityNumber || null, // Optional field
-        salary, // Use the parsed salary
-        currency: body.currency || null, // Optional field
-        isProbation: body.isProbation === 'true', // Boolean field
-        probationEndDate: body.probationEndDate ? new Date(body.probationEndDate) : null, // Optional date
-        contractEndDate: body.contractEndDate ? new Date(body.contractEndDate) : null, // Optional date
-        employmentStatus: body.employmentStatus || 'ACTIVE', // Default to ACTIVE
-        profileImage: typeof body.profileImage === 'string' ? body.profileImage : null, // Optional field
-        resumeLink: body.resumeLink || null, // Optional field
-        contractLink: body.contractLink || null, // Optional field
-        identityDocumentLink: body.identityDocumentLink || null, // Optional field
+        bankName: body.bankName || null,
+        bankAccountNumber: body.bankAccountNumber || null,
+        bankBranch: body.bankBranch || null,
+        taxID: body.taxID || null,
+        socialSecurityNumber: body.socialSecurityNumber || null,
+        salary,
+        currency: body.currency || null,
+        isProbation: body.isProbation === 'true',
+        probationEndDate: body.probationEndDate ? new Date(body.probationEndDate) : null,
+        contractEndDate: body.contractEndDate ? new Date(body.contractEndDate) : null,
+        employmentStatus: body.employmentStatus || 'ACTIVE',
+        profileImage: typeof body.profileImage === 'string' ? body.profileImage : null,
+        resumeLink: body.resumeLink || null,
+        contractLink: body.contractLink || null,
+        identityDocumentLink: body.identityDocumentLink || null,
       },
     });
 
     return NextResponse.json(employee, { status: 201 });
   } catch (error) {
     console.error('Error creating employee:', error);
-    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create employee.' }, { status: 500 });
   }
 }
-
 export async function GET(request: NextRequest) {
   try {
     // Extract and verify JWT token from headers or cookies
