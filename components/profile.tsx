@@ -18,7 +18,7 @@ interface User {
 const Profile = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [userDetails, setUserDetails] = useState<User | null>(null);
-  const { toast } = useToast();
+  useToast();
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);

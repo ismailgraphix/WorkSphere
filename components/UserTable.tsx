@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import {
   Table,
@@ -55,11 +55,28 @@ export function UserTable() {
 
   useEffect(() => {
     fetchUsers()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Memoize the filterUsers function to prevent unnecessary re-renders
+  const filterUsers = useCallback(() => {
+    let filtered = users
+    if (searchTerm) {
+      filtered = filtered.filter(user => 
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.employeeId.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+    if (roleFilter !== 'ALL') {
+      filtered = filtered.filter(user => user.role === roleFilter)
+    }
+    setFilteredUsers(filtered)
+  }, [users, searchTerm, roleFilter]) // Dependencies
 
   useEffect(() => {
     filterUsers()
-  }, [users, searchTerm, roleFilter])
+  }, [filterUsers]) // Only re-run when filterUsers changes
 
   const fetchUsers = async () => {
     try {
@@ -76,21 +93,6 @@ export function UserTable() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const filterUsers = () => {
-    let filtered = users
-    if (searchTerm) {
-      filtered = filtered.filter(user => 
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.employeeId.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-    if (roleFilter !== 'ALL') {
-      filtered = filtered.filter(user => user.role === roleFilter)
-    }
-    setFilteredUsers(filtered)
   }
 
   const handleEdit = (user: User) => {
@@ -234,7 +236,7 @@ export function UserTable() {
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
-              Make changes to the user's information here. Click save when you're done.
+              Make changes to the user&apos;s information here. Click save when you&apos;re done.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSave}>
@@ -272,27 +274,10 @@ export function UserTable() {
                   className="col-span-3"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="role" className="text-right">
-                  Role
-                </label>
-                <Select 
-                  value={editingUser?.role} 
-                  onValueChange={(value) => setEditingUser(prev => prev ? {...prev, role: value} : null)}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
-                    <SelectItem value="HR">HR</SelectItem>
-                    <SelectItem value="EMPLOYEE">Employee</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
             <DialogFooter>
-              <Button type="submit">Save changes</Button>
+              <Button type="submit">Save</Button>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
             </DialogFooter>
           </form>
         </DialogContent>

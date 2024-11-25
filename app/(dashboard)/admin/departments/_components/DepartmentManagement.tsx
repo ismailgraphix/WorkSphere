@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
@@ -32,7 +32,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Loader2, MoreHorizontal, ArrowUpDown } from 'lucide-react'
 import {
@@ -47,205 +46,9 @@ import {
   getFilteredRowModel,
 } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
-
-interface Department {
-  id: string
-  name: string
-  departmentHead: {
-    id: string
-    name: string
-    employeeId: string
-  } | null
-  isActive: boolean
-}
-
-const AddDepartmentModal: React.FC<{ onDepartmentAdded: () => void }> = ({ onDepartmentAdded }) => {
-  const [name, setName] = useState("")
-  const [departmentHeadEmployeeId, setDepartmentHeadEmployeeId] = useState("")
-  const [isActive, setIsActive] = useState(true)
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [isOpen, setIsOpen] = useState(false)
-  const { toast } = useToast()
-
-  const handleSubmit = async () => {
-    setError("")
-    setLoading(true)
-
-    if (!name || !departmentHeadEmployeeId) {
-      setError("Please fill all required fields.")
-      setLoading(false)
-      return
-    }
-
-    try {
-      const response = await axios.post(
-        "/api/departments",
-        { name, departmentHeadEmployeeId, isActive },
-        { withCredentials: true }
-      )
-
-      if (response.status === 201) {
-        toast({
-          title: "Success",
-          description: "Department added successfully!",
-        })
-        onDepartmentAdded()
-        setIsOpen(false)
-        setName("")
-        setDepartmentHeadEmployeeId("")
-        setIsActive(true)
-      }
-    } catch (error) {
-      console.error("Error adding department:", error)
-      toast({
-        title: "Error",
-        description: "Failed to add department. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="outline">Add Department</Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Add Department</AlertDialogTitle>
-          <AlertDialogDescription>
-            Enter the details of the new department.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <div className="space-y-4">
-          <Input
-            placeholder="Department Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <Input
-            placeholder="Department Head Employee ID"
-            value={departmentHeadEmployeeId}
-            onChange={(e) => setDepartmentHeadEmployeeId(e.target.value)}
-          />
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="isActive"
-              checked={isActive}
-              onCheckedChange={(checked) => setIsActive(checked as boolean)}
-            />
-            <label htmlFor="isActive">Activate Department</label>
-          </div>
-          {error && <p className="text-sm font-medium text-red-500">{error}</p>}
-        </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction asChild>
-            <Button onClick={handleSubmit} disabled={loading}>
-              {loading ? "Adding..." : "Add Department"}
-            </Button>
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
-}
-
-const EditDepartmentModal: React.FC<{
-  isOpen: boolean
-  onClose: () => void
-  department: Department
-  onDepartmentUpdated: () => void
-}> = ({ isOpen, onClose, department, onDepartmentUpdated }) => {
-  const [name, setName] = useState(department.name)
-  const [departmentHeadId, setDepartmentHeadId] = useState(department.departmentHead?.employeeId || "")
-  const [isActive, setIsActive] = useState(department.isActive)
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const { toast } = useToast()
-
-  const handleUpdate = async () => {
-    setError("")
-    setLoading(true)
-
-    if (!name) {
-      setError("Please fill in the department name.")
-      setLoading(false)
-      return
-    }
-
-    try {
-      const response = await axios.put(
-        `/api/departments/${department.id}`,
-        { name, departmentHeadEmployeeId: departmentHeadId, isActive },
-        { withCredentials: true }
-      )
-
-      if (response.status === 200) {
-        toast({
-          title: "Department Updated",
-          description: "The department has been successfully updated.",
-        })
-        onDepartmentUpdated()
-        onClose()
-      }
-    } catch (error) {
-      console.error("Error updating department:", error)
-      toast({
-        title: "Error",
-        description: "Failed to update department. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Edit Department</AlertDialogTitle>
-          <AlertDialogDescription>
-            Update the details of the department.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <div className="space-y-4">
-          <Input
-            placeholder="Department Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <Input
-            placeholder="Department Head Employee ID"
-            value={departmentHeadId}
-            onChange={(e) => setDepartmentHeadId(e.target.value)}
-          />
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="isActive"
-              checked={isActive}
-              onCheckedChange={(checked) => setIsActive(checked as boolean)}
-            />
-            <label htmlFor="isActive">Activate</label>
-          </div>
-          {error && <p className="text-sm font-medium text-red-500">{error}</p>}
-        </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction asChild>
-            <Button onClick={handleUpdate} disabled={loading}>
-              {loading ? "Updating..." : "Update Department"}
-            </Button>
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
-}
+import { Department } from '@/types/department'
+import { AddDepartmentModal } from './AddDepartmentModal'
+import { EditDepartmentModal } from './EditDepartmentModal'
 
 export default function DepartmentManagement() {
   const [departments, setDepartments] = useState<Department[]>([])
@@ -253,8 +56,10 @@ export default function DepartmentManagement() {
   const { toast } = useToast()
   const [editingDepartment, setEditingDepartment] = useState<string | null>(null)
   const [deletingDepartment, setDeletingDepartment] = useState<string | null>(null)
+  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
-  const fetchDepartments = async () => {
+  const fetchDepartments = useCallback(async () => {
     try {
       setLoading(true)
       const response = await axios.get('/api/departments', { withCredentials: true })
@@ -269,11 +74,41 @@ export default function DepartmentManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
 
   useEffect(() => {
     fetchDepartments()
-  }, [])
+  }, [fetchDepartments])
+
+  const handleDelete = async (departmentId: string) => {
+    try {
+      setLoading(true);
+      const response = await axios.delete(`/api/departments/${departmentId}`, {
+        withCredentials: true
+      });
+
+      if (response.status === 200) {
+        toast({
+          title: "Success",
+          description: "Department deleted successfully.",
+        });
+        await fetchDepartments();
+      }
+    } catch (error: unknown) {
+      console.error("Error deleting department:", error);
+      if (error instanceof Error) {
+        toast({
+          title: "Error",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          description: (error as any).response?.data?.error || "Failed to delete department. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setLoading(false);
+      setDeletingDepartment(null);
+    }
+  };
 
   const columns: ColumnDef<Department>[] = [
     {
@@ -350,7 +185,8 @@ export default function DepartmentManagement() {
             />
 
             <AlertDialog 
-              open={deletingDepartment === department.id} 
+              open={deletingDepartment
+=== department.id} 
               onOpenChange={() => setDeletingDepartment(null)}
             >
               <AlertDialogContent>
@@ -381,9 +217,6 @@ export default function DepartmentManagement() {
     },
   ]
 
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
- 
   const table = useReactTable({
     data: departments,
     columns,
@@ -399,40 +232,11 @@ export default function DepartmentManagement() {
     },
   })
 
-  const handleDelete = async (departmentId: string) => {
-    try {
-      setLoading(true);
-      const response = await axios.delete(`/api/departments/${departmentId}`, {
-        withCredentials: true
-      });
-
-      if (response.status === 200) {
-        toast({
-          title: "Success",
-          description: "Department deleted successfully.",
-        });
-        await fetchDepartments(); // Refresh the departments list
-      }
-    } catch (error: unknown) {
-      console.error("Error deleting department:", error);
-      if (error instanceof Error) {
-        toast({
-          title: "Error",
-          description: (error as any).response?.data?.error || "Failed to delete department. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } finally {
-      setLoading(false);
-      setDeletingDepartment(null); // Close the delete dialog
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Departments</CardTitle>
-        <CardDescription>Manage your organization &apos;s departments</CardDescription>
+        <CardDescription>Manage your organization&apos;s departments</CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -516,3 +320,4 @@ export default function DepartmentManagement() {
     </Card>
   )
 }
+

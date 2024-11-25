@@ -13,8 +13,18 @@ export function FileUpload({ onUpload, label }: FileUploadProps) {
   return (
     <CldUploadWidget
       uploadPreset="fusejogp"
-      onSuccess={(result: any) => {
-        onUpload(result.info.secure_url)
+      onSuccess={(result) => {
+        // Safely extract secure_url
+        const secureUrl =
+          result.info && typeof result.info !== 'string' && result.info.secure_url
+            ? result.info.secure_url
+            : null;
+
+        if (secureUrl) {
+          onUpload(secureUrl); // Call the upload handler with the secure URL
+        } else {
+          console.error('Failed to retrieve secure_url from the upload result:', result);
+        }
       }}
     >
       {({ open }) => {

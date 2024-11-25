@@ -16,7 +16,7 @@ import { Loader2, Upload, File, X, Calendar as CalendarIcon } from 'lucide-react
 import { Card, CardContent } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format, parse, isValid } from "date-fns"
+import { format,  isValid } from "date-fns"
 
 interface Employee {
   id: string
@@ -105,6 +105,7 @@ export default function EditEmployeeForm() {
         setEmployee(employeeData)
         setDepartments(departmentsData.filter((dept: Department) => dept.isActive))
       } catch (error) {
+        console.error("Error occurred", error)
         toast({
           title: "Error",
           description: "Failed to load employee data. Please try again.",

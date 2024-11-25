@@ -14,7 +14,7 @@ export async function GET(
     // First, get the employee record for this user
     const employee = await prisma.employee.findFirst({
       where: {
-        user_id: userId, // Assuming this is how it's defined in your schema
+        id: userId, // Assuming this is how it's defined in your schema
       },
     });
 

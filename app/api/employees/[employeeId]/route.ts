@@ -98,6 +98,7 @@ export async function GET(request: NextRequest, { params }: { params: { employee
         return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 })
       }
     } catch (error) {
+      console.error("Error occurred", error)
       return NextResponse.json({ error: 'Invalid token.' }, { status: 401 })
     }
 
@@ -155,6 +156,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { emplo
           return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
         }
       } catch (error) {
+        console.error("Error occurred", error)
         return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
       }
   

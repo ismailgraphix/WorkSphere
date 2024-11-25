@@ -56,6 +56,7 @@ export default function ProfileDisplay({ userData }: { userData: UserData }) {
         throw new Error('Failed to update profile image')
       }
     } catch (error) {
+      console.error("Error occurred", error)
       toast({
         title: "Error",
         description: "Failed to update profile image. Please try again.",

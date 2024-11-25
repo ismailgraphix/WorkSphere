@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
@@ -37,7 +37,6 @@ export default function JobManagement() {
   const [departments, setDepartments] = useState<Department[]>([])
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [jobToDelete, setJobToDelete] = useState<string | null>(null)
   const [editingJob, setEditingJob] = useState<Job | null>(null)
   const { toast } = useToast()
@@ -56,6 +55,7 @@ export default function JobManagement() {
   useEffect(() => {
     fetchJobs()
     fetchDepartments()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchJobs = async () => {
@@ -68,6 +68,7 @@ export default function JobManagement() {
         throw new Error('Failed to fetch jobs')
       }
     } catch (error) {
+      console.error("Error occurred", error)
       toast({
         title: "Error",
         description: "Failed to load jobs. Please try again.",
@@ -88,6 +89,7 @@ export default function JobManagement() {
         throw new Error('Failed to fetch departments')
       }
     } catch (error) {
+      console.error("Error occurred", error)
       toast({
         title: "Error",
         description: "Failed to load departments. Please try again.",
@@ -138,6 +140,7 @@ export default function JobManagement() {
         throw new Error(`Failed to ${editingJob ? 'update' : 'create'} job`)
       }
     } catch (error) {
+      console.error("Error occurred", error)
       toast({
         title: "Error",
         description: `Failed to ${editingJob ? 'update' : 'create'} job. Please try again.`,
@@ -178,6 +181,7 @@ export default function JobManagement() {
           throw new Error('Failed to delete job')
         }
       } catch (error) {
+        console.error("Error occurred", error)
         toast({
           title: "Error",
           description: "Failed to delete job. Please try again.",
@@ -185,7 +189,7 @@ export default function JobManagement() {
         })
       } finally {
         setLoading(false)
-        setIsDeleteDialogOpen(false)
+        setIsDialogOpen(false)
         setJobToDelete(null)
       }
     }

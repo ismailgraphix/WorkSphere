@@ -3,10 +3,10 @@ import { prisma } from "@/lib/db"
 
 export async function PUT(
   request: Request,
-  { params }: { params: { employeeId: string } }
+  { }: { params: { employeeId: string } }
 ) {
   try {
-    const { employeeId } = params
+    // Destructure leaveId and status from the request body
     const { status, leaveId } = await request.json()
 
     if (!leaveId) {

@@ -101,7 +101,7 @@ export default function EmployeeAttendance() {
             <div className="flex space-x-4">
               <Button
                 onClick={() => handleAttendance('checkIn')}
-                disabled={loading || todayRecord?.checkIn}
+                disabled={loading || todayRecord?.checkIn !== undefined}
                 className="flex-1"
               >
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Clock className="mr-2 h-4 w-4" />}
@@ -109,7 +109,7 @@ export default function EmployeeAttendance() {
               </Button>
               <Button
                 onClick={() => handleAttendance('checkOut')}
-                disabled={loading || !todayRecord?.checkIn || todayRecord?.checkOut}
+                disabled={loading || todayRecord?.checkIn === undefined || todayRecord?.checkOut !== undefined}
                 className="flex-1"
               >
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Clock className="mr-2 h-4 w-4" />}

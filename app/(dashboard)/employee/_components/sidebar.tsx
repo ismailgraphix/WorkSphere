@@ -47,7 +47,8 @@ export default function EmployeeSidebar() {
     { href: '/employee/settings', icon: Settings, label: 'Settings' },
   ]
 
-  const NavItem = ({ href, icon: Icon, label }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const NavItem = ({ href, icon: Icon, label }: { href: string; icon: React.ComponentType<any>; label: string }) => {
     const isActive = pathname === href
     return (
       <TooltipProvider>

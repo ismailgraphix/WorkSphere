@@ -6,7 +6,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 export async function GET(request: NextRequest) {
   try {
-    // Extract JWT from cookies
     const cookies = request.headers.get('cookie');
     const token = cookies?.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
 
@@ -16,7 +15,6 @@ export async function GET(request: NextRequest) {
 
     let user;
     try {
-      // Verify and decode the token
       user = jwt.verify(token, JWT_SECRET);
 
       if (typeof user !== 'object' || !user.id) {
@@ -27,49 +25,33 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
     }
 
-    // Fetch the employee's department
     const employee = await prisma.employee.findUnique({
       where: { id: user.id },
       include: {
         department: {
           include: {
             departmentHead: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true,
-                image: true,
-              }
+              select: { id: true, email: true },
             },
             employees: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true,
-                image: true,
-                position: true,
-              }
+              select: { id: true, email: true, position: true },
             },
             createdBy: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true,
-              }
+              select: { id: true, email: true },
             },
           },
         },
       },
     });
 
-    if (!employee || !employee.department) {
+    if (!employee) {
+      return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
+    }
+
+    if (!employee.department) {
       return NextResponse.json({ error: 'Department not found' }, { status: 404 });
     }
 
-    // Fetch recent leave count
     const recentLeaveCount = await prisma.leave.count({
       where: {
         departmentId: employee.department.id,

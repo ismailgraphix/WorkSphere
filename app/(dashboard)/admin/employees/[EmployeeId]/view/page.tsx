@@ -51,6 +51,7 @@ export default function ViewEmployeePage() {
         const data = await res.json()
         setEmployee(data)
       } catch (error) {
+        console.error("Error occurred", error)
         toast({
           title: "Error",
           description: "Failed to load employee data. Please try again.",

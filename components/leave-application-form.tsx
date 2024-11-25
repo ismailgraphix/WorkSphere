@@ -176,8 +176,6 @@ export default function LeaveApplicationForm() {
         throw new Error(errorData.error || 'Failed to submit leave application')
       }
 
-      const data = await response.json()
-
       toast({
         title: "Success",
         description: "Leave application submitted successfully",

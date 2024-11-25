@@ -28,7 +28,7 @@ export default function LeavePage() {
                 ← Back to List
               </button>
             </div>
-            <LeaveApplicationForm onComplete={() => setShowForm(false)} />
+            <LeaveApplicationForm />
           </div>
         )}
       </div>

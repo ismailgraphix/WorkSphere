@@ -430,41 +430,47 @@ export default function EmployeeRegistrationForm() {
               </Popover>
             </div>
 
-            {/* Document Upload Section */}
-            <div className="md:col-span-2 space-y-4">
-              <h4 className="text-md font-medium">Documents</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {['resumeLink', 'contractLink', 'identityDocumentLink'].map((docType) => (
-                  <Card key={docType}>
-                    <CardContent className="p-4">
-                      <Label htmlFor={docType} className="font-medium mb-2 block">
-                        {docType === 'resumeLink' ? 'Resume' : 
-                         docType === 'contractLink' ? 'Contract' : 'Identity Document'}
-                      </Label>
-                      {employeeData[docType as keyof typeof employeeData] ? (
-                        <div className="flex items-center space-x-2">
-                          <File className="h-6 w-6 text-blue-500" />
-                          <a 
-                            href={employeeData[docType as keyof typeof employeeData] || ''} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="text-blue-500 hover:underline text-sm"
-                          >
-                            View Document
-                          </a>
-                        </div>
-                      ) : (
-                        <FileUpload
-                          onUpload={handleFileUpload(docType)}
-                          label={`Upload ${docType === 'resumeLink' ? 'Resume' : 
-                                          docType === 'contractLink' ? 'Contract' : 'Identity Document'}`}
-                        />
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+{/* Document Upload Section */}
+<div className="md:col-span-2 space-y-4">
+  <h4 className="text-md font-medium">Documents</h4>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {['resumeLink', 'contractLink', 'identityDocumentLink'].map((docType) => (
+      <Card key={docType}>
+        <CardContent className="p-4">
+          <Label htmlFor={docType} className="font-medium mb-2 block">
+            {docType === 'resumeLink' ? 'Resume' : 
+             docType === 'contractLink' ? 'Contract' : 'Identity Document'}
+          </Label>
+          {employeeData[docType as keyof typeof employeeData] ? (
+            <div className="flex items-center space-x-2">
+              <File className="h-6 w-6 text-blue-500" />
+              <a
+  href={
+    employeeData[docType as keyof typeof employeeData] 
+      ? String(employeeData[docType as keyof typeof employeeData]) 
+      : undefined // Use undefined if the value is null or falsy
+  }
+  target="_blank"
+  rel="noopener noreferrer"
+  className="text-blue-500 hover:underline text-sm"
+>
+  View Document
+</a>
             </div>
+          ) : (
+            <FileUpload
+              onUpload={handleFileUpload(docType)}
+              label={`Upload ${docType === 'resumeLink' ? 'Resume' : 
+                          docType === 'contractLink' ? 'Contract' : 'Identity Document'}`}
+            />
+          )}
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+</div>
+
+
 
             <div>
               <Label htmlFor="emergencyContactName">Emergency Contact Name <span className="text-red-500">*</span></Label>

@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
       }
     } catch (error) {
+      console.error("Error occurred", error)
       return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
     }
 
@@ -111,6 +112,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
       }
     } catch (error) {
+      console.error("Error occurred", error)
       return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
     }
 

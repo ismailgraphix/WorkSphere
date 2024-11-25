@@ -1,76 +1,73 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { useToast } from "@/hooks/use-toast"
+import { useEffect, useState, useCallback } from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
 
 interface LeaveData {
-  id: string
-  startDate: Date
-  endDate: Date
-  type: string
-  status: string
-  reason: string
-  employeeId: string
+  id: string;
+  startDate: Date;
+  endDate: Date;
+  type: string;
+  status: string;
+  reason: string;
+  employeeId: string;
 }
 
 export default function EmployeeLeaveTable() {
-  const [leaveApplications, setLeaveApplications] = useState<LeaveData[]>([])
-  const [loading, setLoading] = useState(true)
-  const { toast } = useToast()
+  const [leaveApplications, setLeaveApplications] = useState<LeaveData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const fetchLeaveApplications = async () => {
+  // Wrap the fetchLeaveApplications function in useCallback
+  const fetchLeaveApplications = useCallback(async () => {
     try {
-      // Get the user data from localStorage
-      const user = localStorage.getItem('user')
+      const user = localStorage.getItem('user');
       if (!user) {
-        throw new Error('User not found in localStorage')
-      }
-      
-      const userData = JSON.parse(user)
-      // Log the user data to see what we're working with
-      console.log('User Data:', userData)
-      
-      // Get the employee ID - adjust this based on your actual user object structure
-      const employeeId = userData.id // or userData.employeeId depending on your structure
-      if (!employeeId) {
-        throw new Error('Employee ID not found in user data')
+        throw new Error('User not found in localStorage');
       }
 
-      console.log('Fetching leaves for employee:', employeeId)
-      
-      const response = await fetch(`/api/leave/employee/${employeeId}`)
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to fetch leave applications')
+      const userData = JSON.parse(user);
+      console.log('User Data:', userData);
+
+      const employeeId = userData.id;
+      if (!employeeId) {
+        throw new Error('Employee ID not found in user data');
       }
-      
-      const data = await response.json()
-      console.log('Received leave data:', data)
-      setLeaveApplications(data)
+
+      console.log('Fetching leaves for employee:', employeeId);
+
+      const response = await fetch(`/api/leave/employee/${employeeId}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch leave applications');
+      }
+
+      const data = await response.json();
+      console.log('Received leave data:', data);
+      setLeaveApplications(data);
     } catch (error) {
-      console.error('Error fetching leave applications:', error)
+      console.error('Error fetching leave applications:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to load your leave applications. Please try again.",
         variant: "destructive",
-      })
-      setLeaveApplications([])
+      });
+      setLeaveApplications([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  }, [toast]);
 
+  // Pass fetchLeaveApplications as a dependency
   useEffect(() => {
-    fetchLeaveApplications()
-  }, [])
+    fetchLeaveApplications();
+  }, [fetchLeaveApplications]);
 
   if (loading) {
-    return <div>Loading...</div>
+    return <div>Loading...</div>;
   }
 
   if (leaveApplications.length === 0) {
-    return <div>No leave applications found.</div>
+    return <div>No leave applications found.</div>;
   }
 
   return (
@@ -100,5 +97,5 @@ export default function EmployeeLeaveTable() {
         ))}
       </TableBody>
     </Table>
-  )
+  );
 }

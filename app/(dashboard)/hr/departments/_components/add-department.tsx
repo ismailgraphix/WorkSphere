@@ -88,7 +88,7 @@ export default function AddDepartmentModal() {
           <div className="flex items-center">
             <Checkbox
               checked={isActive}
-              onCheckedChange={(checked) => setIsActive(checked)}
+              onCheckedChange={(checked) => setIsActive(checked === true)}
             />
             <label className="ml-2">Activate</label>
           </div>

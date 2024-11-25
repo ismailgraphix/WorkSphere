@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db"
 import { cookies } from "next/headers"
 import { getSession } from "@/lib/auth"
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     // Get the user session
     const cookieStore = cookies()
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     // First get the employee details
     const employee = await prisma.employee.findFirst({
       where: {
-        user_id: userId
+        id: userId,
       }
     })
 

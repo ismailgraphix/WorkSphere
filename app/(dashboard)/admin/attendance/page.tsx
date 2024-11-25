@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useToast } from "@/hooks/use-toast"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2,  Search } from "lucide-react"
+import { Loader2, Search } from "lucide-react"
 import { format } from 'date-fns'
 
 interface AttendanceRecord {
@@ -27,11 +27,8 @@ export default function AdminHrAttendance() {
   const [dateFilter, setDateFilter] = useState('all')
   const { toast } = useToast()
 
-  useEffect(() => {
-    fetchAttendanceRecords()
-  }, [])
-
-  const fetchAttendanceRecords = async () => {
+  // Memoize the fetchAttendanceRecords function
+  const fetchAttendanceRecords = useCallback(async () => {
     setLoading(true)
     try {
       const response = await fetch('/api/attendance/all')
@@ -51,7 +48,11 @@ export default function AdminHrAttendance() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])  // Add toast to the dependency array
+
+  useEffect(() => {
+    fetchAttendanceRecords()
+  }, [fetchAttendanceRecords])  // Add fetchAttendanceRecords to the dependency array
 
   const filteredRecords = records.filter(record => {
     const matchesSearch = record.userName.toLowerCase().includes(searchTerm.toLowerCase())

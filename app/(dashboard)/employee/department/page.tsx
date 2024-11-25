@@ -42,6 +42,7 @@ export default function EmployeeDepartmentPage() {
         const data = await response.json()
         setDepartment(data)
       } catch (error) {
+        console.error("Error occurred", error)
         toast({
           title: "Error",
           description: "Failed to load department data. Please try again later.",

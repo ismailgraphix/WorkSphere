@@ -1,6 +1,5 @@
-'use client'
-
-import { useState, useEffect } from 'react'
+"use client"
+import { useState, useEffect, useCallback } from 'react'
 import { format } from 'date-fns'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -29,11 +28,8 @@ export default function HolidayManager() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const { toast } = useToast()
 
-  useEffect(() => {
-    fetchHolidays()
-  }, [])
-
-  const fetchHolidays = async () => {
+  // Memoize fetchHolidays using useCallback
+  const fetchHolidays = useCallback(async () => {
     try {
       const response = await fetch('/api/holidays')
       if (!response.ok) throw new Error('Failed to fetch holidays')
@@ -49,7 +45,11 @@ export default function HolidayManager() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast]) // Ensure fetchHolidays is updated if toast changes
+
+  useEffect(() => {
+    fetchHolidays() // Call the memoized function on mount
+  }, [fetchHolidays]) // Include fetchHolidays in the dependency array
 
   const addHoliday = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,7 +60,7 @@ export default function HolidayManager() {
         body: JSON.stringify(newHoliday),
       })
       if (!response.ok) throw new Error('Failed to add holiday')
-      await fetchHolidays()
+      await fetchHolidays() // Call fetchHolidays after adding a holiday
       setIsAddModalOpen(false)
       setNewHoliday({ title: '', date: '', isRecurring: false })
       toast({
@@ -84,7 +84,6 @@ export default function HolidayManager() {
     return matchesSearch && (showPastHolidays || !isPast)
   })
 
-  
   if (loading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
   }
