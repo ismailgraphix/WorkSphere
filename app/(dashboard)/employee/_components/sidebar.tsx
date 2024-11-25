@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -27,6 +26,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import WorkSphereLogo from '@/components/WorkSphereLogo'
 
 export default function EmployeeSidebar() {
   const pathname = usePathname()
@@ -80,8 +80,8 @@ export default function EmployeeSidebar() {
     )}>
       <div className="flex items-center justify-between px-4 py-6">
         <div className="flex items-center gap-2">
-          <Image src="/employee.png" alt="Company Logo" width={32} height={32} />
-          {!isCollapsed && <h2 className="text-xl font-semibold">Employee Portal</h2>}
+          <WorkSphereLogo isCollapsed={isCollapsed} />
+          {!isCollapsed && <h2 className="text-xl font-semibold"></h2>}
         </div>
         <Button
           variant="ghost"

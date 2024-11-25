@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import Image from 'next/image'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -26,11 +25,10 @@ import {
   TreePalm,
   UserPlus,
   Users,
-  
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
-import logo from '../../../../assets/employee.png'
+import WorkSphereLogo from '../../../../components/WorkSphereLogo'
 
 const sidebarItems = [
   { icon: LayoutGrid, label: 'Dashboard', href: '/admin' },
@@ -61,8 +59,7 @@ export default function AdminSidebar() {
       )}>
         <div className="flex items-center justify-between p-4">
           <Link href="/admin" className="flex items-center space-x-2">
-            <Image src={logo} alt="EnterpriseAdmin Logo" width={32} height={32} />
-            {!isCollapsed && <h2 className="text-xl font-semibold">EnterpriseAdmin</h2>}
+            <WorkSphereLogo isCollapsed={isCollapsed} />
           </Link>
           <Button
             variant="ghost"

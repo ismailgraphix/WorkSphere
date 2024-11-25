@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import Image from 'next/image'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -14,17 +13,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Separator } from "@/components/ui/separator"
-import {
-  Users,
-  Building2,
-  CalendarCheck,
-  HandCoins,
-  Clock,
-  ChartBar,
-  Settings,
-  Menu,
-} from 'lucide-react'
-import logo from '@/assets/employee.png'
+import { Users, Building2, CalendarCheck, HandCoins, Clock, BarChartIcon as ChartBar, Settings, Menu } from 'lucide-react'
+import WorkSphereLogo from '@/components/WorkSphereLogo'
 
 const sidebarItems = [
   { icon: Users, label: 'Dashboard', href: '/hr' },
@@ -49,8 +39,8 @@ export default function HrSidebar() {
       )}>
         <div className="flex items-center justify-between p-4">
           <Link href="/hr" className="flex items-center space-x-2">
-            <Image src={logo} alt="EnterpriseHR Logo" width={32} height={32} />
-            {!isCollapsed && <h2 className="text-xl font-semibold">EnterpriseHR</h2>}
+            <WorkSphereLogo isCollapsed={isCollapsed} />
+            {!isCollapsed && <h2 className="text-xl font-semibold"></h2>}
           </Link>
           <Button
             variant="ghost"
@@ -64,7 +54,7 @@ export default function HrSidebar() {
         </div>
         <ScrollArea className="flex-1 py-2">
           <nav className="space-y-1 px-2">
-            {sidebarItems.map((item, index) => (
+            {sidebarItems.map((item) => (
               <Tooltip key={item.href} delayDuration={0}>
                 <TooltipTrigger asChild>
                   <Link

@@ -413,13 +413,15 @@ export default function DepartmentManagement() {
         });
         await fetchDepartments(); // Refresh the departments list
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting department:", error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.error || "Failed to delete department. Please try again.",
-        variant: "destructive",
-      });
+      if (error instanceof Error) {
+        toast({
+          title: "Error",
+          description: (error as any).response?.data?.error || "Failed to delete department. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
       setDeletingDepartment(null); // Close the delete dialog

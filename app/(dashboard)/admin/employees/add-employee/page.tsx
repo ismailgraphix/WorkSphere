@@ -11,8 +11,11 @@ import { useToast } from "../../../../../hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { FileUpload } from "@/components/file-upload";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, File } from 'lucide-react';
+import { Upload, File, Calendar as CalendarIcon } from 'lucide-react';
 import Image from "next/image";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
 
 interface Department {
   id: string;
@@ -30,20 +33,20 @@ export default function EmployeeRegistrationForm() {
     email: '',
     phoneNumber: '',
     gender: '',
-    dateOfBirth: '',
+    dateOfBirth: null as Date | null,
     address: '',
     nationalID: '',
     maritalStatus: '',
     departmentId: '',
     position: '',
-    dateOfJoining: '',
+    dateOfJoining: null as Date | null,
     employmentType: '',
     employmentStatus: 'ACTIVE',
     salary: '',
     currency: '',
     isProbation: 'false',
-    probationEndDate: '',
-    contractEndDate: '',
+    probationEndDate: null as Date | null,
+    contractEndDate: null as Date | null,
     emergencyContactName: '',
     emergencyContactPhone: '',
     emergencyContactRelationship: '',
@@ -67,6 +70,7 @@ export default function EmployeeRegistrationForm() {
         const data = await res.json();
         const activeDepartments = data.filter((dept: Department) => dept.isActive);
         setDepartments(activeDepartments);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         toast({
           title: "Error fetching departments",
@@ -88,6 +92,10 @@ export default function EmployeeRegistrationForm() {
     setEmployeeData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleDateChange = (name: string) => (date: Date | undefined) => {
+    setEmployeeData(prev => ({ ...prev, [name]: date || null }));
+  };
+
   const handleFileUpload = (field: string) => async (url: string) => {
     setEmployeeData(prev => ({ ...prev, [field]: url }));
   };
@@ -96,7 +104,15 @@ export default function EmployeeRegistrationForm() {
     event.preventDefault();
     setLoading(true);
 
-    console.log('Employee Form Data:', employeeData); // Log the form data
+    const formattedData = {
+      ...employeeData,
+      dateOfBirth: employeeData.dateOfBirth ? format(employeeData.dateOfBirth, 'yyyy-MM-dd') : null,
+      dateOfJoining: employeeData.dateOfJoining ? format(employeeData.dateOfJoining, 'yyyy-MM-dd') : null,
+      probationEndDate: employeeData.probationEndDate ? format(employeeData.probationEndDate, 'yyyy-MM-dd') : null,
+      contractEndDate: employeeData.contractEndDate ? format(employeeData.contractEndDate, 'yyyy-MM-dd') : null,
+    };
+
+    console.log('Employee Form Data:', formattedData);
 
     try {
       const res = await fetch("/api/employees", {
@@ -104,7 +120,7 @@ export default function EmployeeRegistrationForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(employeeData),
+        body: JSON.stringify(formattedData),
       });
 
       if (!res.ok) {
@@ -112,7 +128,6 @@ export default function EmployeeRegistrationForm() {
         throw new Error(errorData.error || 'Failed to register employee');
       }
 
-      const result = await res.json();
 
       toast({
         title: "Success",
@@ -181,7 +196,25 @@ export default function EmployeeRegistrationForm() {
 
             <div>
               <Label htmlFor="dateOfBirth">Date of Birth <span className="text-red-500">*</span></Label>
-              <Input id="dateOfBirth" name="dateOfBirth" type="date" value={employeeData.dateOfBirth} onChange={handleInputChange} required />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={`w-full justify-start text-left font-normal ${!employeeData.dateOfBirth && "text-muted-foreground"}`}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {employeeData.dateOfBirth ? format(employeeData.dateOfBirth, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={employeeData.dateOfBirth || undefined}
+                    onSelect={handleDateChange("dateOfBirth")}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div>
@@ -270,7 +303,25 @@ export default function EmployeeRegistrationForm() {
 
             <div>
               <Label htmlFor="dateOfJoining">Date of Joining <span className="text-red-500">*</span></Label>
-              <Input id="dateOfJoining" name="dateOfJoining" type="date" value={employeeData.dateOfJoining} onChange={handleInputChange} required />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={`w-full justify-start text-left font-normal ${!employeeData.dateOfJoining && "text-muted-foreground"}`}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {employeeData.dateOfJoining ? format(employeeData.dateOfJoining, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={employeeData.dateOfJoining || undefined}
+                    onSelect={handleDateChange("dateOfJoining")}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div>
@@ -335,12 +386,48 @@ export default function EmployeeRegistrationForm() {
 
             <div>
               <Label htmlFor="probationEndDate">Probation End Date</Label>
-              <Input id="probationEndDate" name="probationEndDate" type="date" value={employeeData.probationEndDate} onChange={handleInputChange} />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={`w-full justify-start text-left font-normal ${!employeeData.probationEndDate && "text-muted-foreground"}`}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {employeeData.probationEndDate ? format(employeeData.probationEndDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={employeeData.probationEndDate || undefined}
+                    onSelect={handleDateChange("probationEndDate")}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div>
               <Label htmlFor="contractEndDate">Contract End Date</Label>
-              <Input id="contractEndDate" name="contractEndDate" type="date" value={employeeData.contractEndDate} onChange={handleInputChange} />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={`w-full justify-start text-left font-normal ${!employeeData.contractEndDate && "text-muted-foreground"}`}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {employeeData.contractEndDate ? format(employeeData.contractEndDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={employeeData.contractEndDate || undefined}
+                    onSelect={handleDateChange("contractEndDate")}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Document Upload Section */}
@@ -358,7 +445,7 @@ export default function EmployeeRegistrationForm() {
                         <div className="flex items-center space-x-2">
                           <File className="h-6 w-6 text-blue-500" />
                           <a 
-                            href={employeeData[docType as keyof typeof employeeData]} 
+                            href={employeeData[docType as keyof typeof employeeData] || ''} 
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className="text-blue-500 hover:underline text-sm"

@@ -8,12 +8,15 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useToast } from "../../../../../hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { FileUpload } from "@/components/file-upload"
 import Image from "next/image"
 import { EmploymentType, MaritalStatus, Currency, EmploymentStatus } from '@prisma/client'
-import { Loader2, Upload, File, X } from 'lucide-react'
+import { Loader2, Upload, File, X, Calendar as CalendarIcon } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { format, parse, isValid } from "date-fns"
 
 interface Employee {
   id: string
@@ -24,12 +27,12 @@ interface Employee {
   email: string
   phoneNumber: string
   gender: string
-  dateOfBirth: string
+  dateOfBirth: string | null
   address: string
   nationalID: string
   position: string
   department: { id: string; name: string }
-  dateOfJoining: string
+  dateOfJoining: string | null
   employmentType: string
   employmentStatus: "ACTIVE" | "SUSPENDED" | "TERMINATED"
   maritalStatus: string
@@ -39,8 +42,8 @@ interface Employee {
   salary?: number
   currency?: string
   isProbation: boolean
-  probationEndDate?: string
-  contractEndDate?: string
+  probationEndDate?: string | null
+  contractEndDate?: string | null
   bankName?: string
   bankAccountNumber?: string
   bankBranch?: string
@@ -57,6 +60,13 @@ interface Department {
   name: string
   isActive: boolean
 }
+
+// Helper function to safely parse dates
+const safeParseDate = (dateString: string | null | undefined): Date | null => {
+  if (!dateString) return null;
+  const parsedDate = new Date(dateString);
+  return isValid(parsedDate) ? parsedDate : null;
+};
 
 export default function EditEmployeeForm() {
   const [employee, setEmployee] = useState<Employee | null>(null)
@@ -129,6 +139,10 @@ export default function EditEmployeeForm() {
         maritalStatus: formData.get('maritalStatus') as MaritalStatus,
         currency: formData.get('currency') as Currency || null,
         employmentStatus: formData.get('employmentStatus') as EmploymentStatus,
+        dateOfBirth: employee?.dateOfBirth,
+        dateOfJoining: employee?.dateOfJoining,
+        probationEndDate: employee?.probationEndDate,
+        contractEndDate: employee?.contractEndDate,
       }
 
       const res = await fetch(`/api/employees/${employeeId}`, {
@@ -199,6 +213,13 @@ export default function EditEmployeeForm() {
     }
   }
 
+  const handleDateChange = (field: keyof Employee) => (date: Date | undefined) => {
+    setEmployee(prev => {
+      if (!prev) return null
+      return { ...prev, [field]: date ? format(date, 'yyyy-MM-dd') : null }
+    })
+  }
+
   if (loading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
   }
@@ -247,7 +268,25 @@ export default function EditEmployeeForm() {
             </div>
             <div>
               <Label htmlFor="dateOfBirth">Date of Birth <span className="text-red-500">*</span></Label>
-              <Input id="dateOfBirth" name="dateOfBirth" type="date" defaultValue={employee.dateOfBirth} required />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={`w-full justify-start text-left font-normal ${!employee.dateOfBirth && "text-muted-foreground"}`}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {employee.dateOfBirth ? format(safeParseDate(employee.dateOfBirth) || new Date(), 'PPP') : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={safeParseDate(employee.dateOfBirth) || undefined}
+                    onSelect={handleDateChange('dateOfBirth')}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div>
               <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
@@ -323,7 +362,25 @@ export default function EditEmployeeForm() {
             </div>
             <div>
               <Label htmlFor="dateOfJoining">Date of Joining</Label>
-              <Input id="dateOfJoining" name="dateOfJoining" type="date" defaultValue={employee.dateOfJoining} required />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={`w-full justify-start text-left font-normal ${!employee.dateOfJoining && "text-muted-foreground"}`}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {employee.dateOfJoining ? format(safeParseDate(employee.dateOfJoining) || new Date(), 'PPP') : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                <Calendar
+                    mode="single"
+                    selected={safeParseDate(employee.dateOfJoining) || undefined}
+                    onSelect={handleDateChange('dateOfJoining')}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div>
               <Label htmlFor="employmentType">Employment Type</Label>
@@ -382,11 +439,47 @@ export default function EditEmployeeForm() {
             </div>
             <div>
               <Label htmlFor="probationEndDate">Probation End Date</Label>
-              <Input id="probationEndDate" name="probationEndDate" type="date" defaultValue={employee.probationEndDate} />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={`w-full justify-start text-left font-normal ${!employee.probationEndDate && "text-muted-foreground"}`}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {employee.probationEndDate ? format(safeParseDate(employee.probationEndDate) || new Date(), 'PPP') : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={safeParseDate(employee.probationEndDate) || undefined}
+                    onSelect={handleDateChange('probationEndDate')}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div>
               <Label htmlFor="contractEndDate">Contract End Date</Label>
-              <Input id="contractEndDate" name="contractEndDate" type="date" defaultValue={employee.contractEndDate} />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={`w-full justify-start text-left font-normal ${!employee.contractEndDate && "text-muted-foreground"}`}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {employee.contractEndDate ? format(safeParseDate(employee.contractEndDate) || new Date(), 'PPP') : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={safeParseDate(employee.contractEndDate) || undefined}
+                    onSelect={handleDateChange('contractEndDate')}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             {/* Document Upload Section */}
             <div className="md:col-span-2 space-y-4">

@@ -1,26 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Define the new fonts */
 :root {
-  --font-quicksand: (--font-quicksand), sans-serif;
-  --font-outfit: (--font-outfit), sans-serif;
+  --font-quicksand: 'Quicksand', sans-serif;  /* Define Quicksand font */
+  --font-outfit: 'Outfit', sans-serif;        /* Define Outfit font */
 }
 
-body {
-  font-family: var(--font-quicksand);
-}
-
-h1, h2, h3, h4, h5, h6,p {
-  font-family: var(--font-outfit);
-}
-
-
+/* Optional: Define utilities for text balance */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
 }
 
+/* Custom theme colors and other utilities */
 @layer base {
   :root {
     --background: 0 0% 100%;
