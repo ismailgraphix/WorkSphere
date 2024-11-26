@@ -192,6 +192,7 @@ model Leave {
   reason      String
   leaveType   String
   status      LeaveStatus @default(PENDING)
+  rejectionReason String?
   isPaidLeave Boolean     @default(false)
 
   employeeId String

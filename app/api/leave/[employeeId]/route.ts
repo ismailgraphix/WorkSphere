@@ -6,8 +6,7 @@ export async function PUT(
   { }: { params: { employeeId: string } }
 ) {
   try {
-    // Destructure leaveId and status from the request body
-    const { status, leaveId } = await request.json()
+    const { status, leaveId, rejectionReason } = await request.json()
 
     if (!leaveId) {
       return NextResponse.json(
@@ -16,14 +15,21 @@ export async function PUT(
       )
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: any = {
+      status,
+      updatedAt: new Date(),
+    }
+
+    if (status === 'REJECTED' && rejectionReason) {
+      updateData.rejectionReason = rejectionReason
+    }
+
     const updatedLeave = await prisma.leave.update({
       where: {
         id: leaveId
       },
-      data: {
-        status,
-        updatedAt: new Date(),
-      },
+      data: updateData,
     })
 
     return NextResponse.json(updatedLeave)

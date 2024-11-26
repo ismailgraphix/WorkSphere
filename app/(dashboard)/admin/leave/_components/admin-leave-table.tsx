@@ -1,66 +1,70 @@
 "use client"
-import { useState, useEffect, useCallback } from 'react';
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { format } from "date-fns";
-import { Loader2, Eye } from "lucide-react";
+
+import { useState, useEffect, useCallback } from 'react'
+import { useToast } from "@/hooks/use-toast"
+import { Button } from "@/components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { format } from "date-fns"
+import { Loader2, Eye } from 'lucide-react'
 
 interface LeaveApplication {
-  id: string;
-  startDate: string;
-  endDate: string;
-  reason: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  id: string
+  startDate: string
+  endDate: string
+  reason: string
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  rejectionReason?: string
   employee: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    position: string;
-  };
+    id: string
+    firstName: string
+    lastName: string
+    position: string
+  }
   department: {
-    id: string;
-    name: string;
-  };
+    id: string
+    name: string
+  }
 }
 
 export default function AdminLeaveTable() {
-  const [leaveApplications, setLeaveApplications] = useState<LeaveApplication[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedLeave, setSelectedLeave] = useState<LeaveApplication | null>(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const { toast } = useToast();
+  const [leaveApplications, setLeaveApplications] = useState<LeaveApplication[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedLeave, setSelectedLeave] = useState<LeaveApplication | null>(null)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState('')
+  const [isRejecting, setIsRejecting] = useState(false)
+  const { toast } = useToast()
 
-  // Stable fetch function using useCallback
   const fetchLeaveApplications = useCallback(async () => {
     try {
-      const response = await fetch('/api/leave');
-      if (!response.ok) throw new Error('Failed to fetch leave applications');
-      const data = await response.json();
-      setLeaveApplications(data);
+      const response = await fetch('/api/leave')
+      if (!response.ok) throw new Error('Failed to fetch leave applications')
+      const data = await response.json()
+      setLeaveApplications(data)
     } catch (error) {
-      console.error("Error occurred", error);
+      console.error('Error fetching leave applications:', error)
       toast({
         title: "Error",
         description: "Failed to load leave applications. Please try again.",
         variant: "destructive",
-      });
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [toast]);
+  }, [toast])
 
   useEffect(() => {
-    fetchLeaveApplications();
-  }, [fetchLeaveApplications]);
+    fetchLeaveApplications()
+  }, [fetchLeaveApplications])
 
   const handleStatusUpdate = async (leaveId: string, employeeId: string, status: 'APPROVED' | 'REJECTED') => {
     try {
-      console.log('Updating leave:', { leaveId, employeeId, status });
-
+      setIsRejecting(true)
       const response = await fetch(`/api/leave/${employeeId}`, {
         method: 'PUT',
         headers: {
@@ -69,42 +73,46 @@ export default function AdminLeaveTable() {
         body: JSON.stringify({
           status,
           leaveId,
+          rejectionReason: status === 'REJECTED' ? rejectionReason : undefined,
         }),
-      });
+      })
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update leave application status');
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update leave application status')
       }
 
-      await fetchLeaveApplications();
-      setIsViewModalOpen(false);
+      await fetchLeaveApplications()
+      setIsViewModalOpen(false)
+      setRejectionReason('')
 
       toast({
         title: "Success",
         description: `Leave application ${status.toLowerCase()}.`,
-      });
+      })
     } catch (error) {
-      console.error('Status update error:', error);
+      console.error('Status update error:', error)
       toast({
         title: "Error",
         description: "Failed to update leave application status. Please try again.",
         variant: "destructive",
-      });
+      })
+    } finally {
+      setIsRejecting(false)
     }
-  };
+  }
 
   const handleViewLeave = (leave: LeaveApplication) => {
-    setSelectedLeave(leave);
-    setIsViewModalOpen(true);
-  };
+    setSelectedLeave(leave)
+    setIsViewModalOpen(true)
+  }
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
-    );
+    )
   }
 
   return (
@@ -157,29 +165,70 @@ export default function AdminLeaveTable() {
           </DialogHeader>
 
           {selectedLeave && (
-            <div className="space-y-6">
-              {/* Details of selected leave */}
-              {selectedLeave.status === 'PENDING' && (
-                <div className="flex justify-end space-x-2 pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleStatusUpdate(selectedLeave.id, selectedLeave.employee.id, 'REJECTED')}
-                    className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700"
-                  >
-                    Reject Leave
-                  </Button>
-                  <Button
-                    onClick={() => handleStatusUpdate(selectedLeave.id, selectedLeave.employee.id, 'APPROVED')}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    Approve Leave
-                  </Button>
+            <div className="space-y-4">
+              <div>
+                <Label>Employee</Label>
+                <p>{selectedLeave.employee.firstName} {selectedLeave.employee.lastName}</p>
+              </div>
+              <div>
+                <Label>Department</Label>
+                <p>{selectedLeave.department.name}</p>
+              </div>
+              <div>
+                <Label>Date Range</Label>
+                <p>{format(new Date(selectedLeave.startDate), 'PP')} - {format(new Date(selectedLeave.endDate), 'PP')}</p>
+              </div>
+              <div>
+                <Label>Reason</Label>
+                <p>{selectedLeave.reason}</p>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Badge variant={selectedLeave.status === 'PENDING' ? 'outline' : selectedLeave.status === 'APPROVED' ? 'default' : 'destructive'}>
+                  {selectedLeave.status}
+                </Badge>
+              </div>
+              {selectedLeave.status === 'REJECTED' && selectedLeave.rejectionReason && (
+                <div>
+                  <Label>Rejection Reason</Label>
+                  <p>{selectedLeave.rejectionReason}</p>
                 </div>
+              )}
+              {selectedLeave.status === 'PENDING' && (
+                <>
+                  <div>
+                    <Label htmlFor="rejectionReason">Rejection Reason (if rejecting)</Label>
+                    <Textarea
+                      id="rejectionReason"
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                      placeholder="Enter reason for rejection"
+                    />
+                  </div>
+                  <DialogFooter className="flex justify-end space-x-2 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleStatusUpdate(selectedLeave.id, selectedLeave.employee.id, 'REJECTED')}
+                      className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700"
+                      disabled={isRejecting}
+                    >
+                      {isRejecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Reject Leave
+                    </Button>
+                    <Button
+                      onClick={() => handleStatusUpdate(selectedLeave.id, selectedLeave.employee.id, 'APPROVED')}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      disabled={isRejecting}
+                    >
+                      Approve Leave
+                    </Button>
+                  </DialogFooter>
+                </>
               )}
             </div>
           )}
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

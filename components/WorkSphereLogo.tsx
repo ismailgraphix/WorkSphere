@@ -41,7 +41,7 @@ export default function WorkSphereLogo({
           <text
             x="110"
             y="60"
-            fontFamily="Arial, sans-serif"
+            fontFamily="quicksand"
             fontSize="24"
             fontWeight="bold"
             fill={textColor}
@@ -51,7 +51,7 @@ export default function WorkSphereLogo({
           <text
             x="110"
             y="90"
-            fontFamily="Arial, sans-serif"
+            fontFamily="poppins"
             fontSize="24"
             fontWeight="bold"
             fill={textColor}
