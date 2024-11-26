@@ -6,12 +6,16 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Calendar } from "@/components/ui/calendar"
 import { Bell, Clock, DollarSign, FileText, Users } from 'lucide-react'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 export default function EmployeeDashboard() {
   const [date, setDate] = useState<Date | undefined>(new Date())
 
   return (
     <div className="p-6 space-y-6">
+        <ScrollArea>
+
+       
       <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -133,6 +137,7 @@ export default function EmployeeDashboard() {
           </CardContent>
         </Card>
       </div>
+      </ScrollArea>
     </div>
   )
 }
