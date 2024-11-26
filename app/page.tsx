@@ -20,7 +20,7 @@ export default function Home() {
         <LoginForm/> 
       </main>
       <footer className="mt-8 text-center text-sm text-gray-500">
-        <p>&copy; 2024 Your Company Name. All rights reserved.</p>
+        <p>&copy; 2024 Worksphere. All rights reserved.</p>
       </footer>
     </div>
   )
