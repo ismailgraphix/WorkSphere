@@ -4,7 +4,7 @@ import LoginForm from '@/components/login-form'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Login | Employee Management System',
+  title: 'Login | WorkSphere',
   description: 'Login to access your employee dashboard',
 }
 
