@@ -14,6 +14,12 @@ export async function PUT(
         { status: 400 }
       )
     }
+    if (!['PENDING', 'APPROVED', 'REJECTED'].includes(status)) {
+      return NextResponse.json(
+        { error: "Invalid status" },
+        { status: 400 }
+      )
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {

@@ -1,62 +1,71 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CalendarDays, DollarSign, Users, Briefcase, Clock } from "lucide-react"
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import { CalendarDays, Users, Briefcase, Building2 } from 'lucide-react'
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
+import { Button } from "@/components/ui/button"
 
-const data = [
-  {
-    name: "Jan",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Feb",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Mar",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Apr",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "May",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Jun",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Jul",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Aug",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Sep",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Oct",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Nov",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Dec",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-]
+interface DashboardData {
+  totalEmployees: number
+  totalDepartments: number
+  openJobs: number
+  attendanceData: { date: string; attendanceRate: number }[]
+}
 
 export default function AdminDashboard() {
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await fetch('/api/dashboard')
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data')
+      }
+      const data = await response.json()
+      setDashboardData(data)
+    } catch (err) {
+      setError('Error fetching dashboard data')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
+
+  const averageAttendance = (() => {
+    if (!dashboardData || !dashboardData.attendanceData || dashboardData.attendanceData.length === 0) {
+      return 0
+    }
+    const sum = dashboardData.attendanceData.reduce((acc, day) => acc + day.attendanceRate, 0)
+    return sum / dashboardData.attendanceData.length
+  })()
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <p className="text-red-500 text-xl mb-4">Error: {error}</p>
+        <Button onClick={fetchDashboardData}>Retry</Button>
+      </div>
+    )
+  }
+
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -78,10 +87,7 @@ export default function AdminDashboard() {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">245</div>
-                <p className="text-xs text-muted-foreground">
-                  +5 from last month
-                </p>
+                <div className="text-2xl font-bold">{dashboardData?.totalEmployees ?? 'N/A'}</div>
               </CardContent>
             </Card>
             <Card>
@@ -92,10 +98,18 @@ export default function AdminDashboard() {
                 <Briefcase className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">12</div>
-                <p className="text-xs text-muted-foreground">
-                  +2 new this week
-                </p>
+                <div className="text-2xl font-bold">{dashboardData?.openJobs ?? 'N/A'}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Departments
+                </CardTitle>
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardData?.totalDepartments ?? 'N/A'}</div>
               </CardContent>
             </Card>
             <Card>
@@ -103,51 +117,45 @@ export default function AdminDashboard() {
                 <CardTitle className="text-sm font-medium">
                   Average Attendance
                 </CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <CalendarDays className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">95.6%</div>
-                <p className="text-xs text-muted-foreground">
-                  +0.8% from last month
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Payroll</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">$45,231.89</div>
-                <p className="text-xs text-muted-foreground">
-                  +20.1% from last month
-                </p>
+                <div className="text-2xl font-bold">
+                  {averageAttendance.toFixed(2)}%
+                </div>
               </CardContent>
             </Card>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
               <CardHeader>
-                <CardTitle>Payroll Overview</CardTitle>
+                <CardTitle>Attendance Overview</CardTitle>
               </CardHeader>
               <CardContent className="pl-2">
                 <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={data}>
+                  <BarChart data={dashboardData?.attendanceData ?? []}>
                     <XAxis
-                      dataKey="name"
+                      dataKey="date"
                       stroke="#888888"
                       fontSize={12}
                       tickLine={false}
                       axisLine={false}
+                      tickFormatter={(value) => new Date(value).getDate().toString()}
                     />
                     <YAxis
                       stroke="#888888"
                       fontSize={12}
                       tickLine={false}
                       axisLine={false}
-                      tickFormatter={(value) => `$${value}`}
+                      tickFormatter={(value) => `${value}%`}
                     />
-                    <Bar dataKey="total" fill="#adfa1d" radius={[4, 4, 0, 0]} />
+                    <Tooltip
+                      contentStyle={{ background: '#333', border: 'none' }}
+                      labelStyle={{ color: '#fff' }}
+                      formatter={(value: number) => [`${value.toFixed(2)}%`, 'Attendance Rate']}
+                      labelFormatter={(label) => `Date: ${new Date(label).toLocaleDateString()}`}
+                    />
+                    <Bar dataKey="attendanceRate" fill="#adfa1d" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -155,44 +163,44 @@ export default function AdminDashboard() {
             <Card className="col-span-3">
               <CardHeader>
                 <CardTitle>Recent Activities</CardTitle>
-                <CardContent>
-                  <div className="space-y-8">
-                    <div className="flex items-center">
-                      <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <div className="ml-4 space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          New employee onboarded
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          2 hours ago
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <div className="ml-4 space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          Payroll processed
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          5 hours ago
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <div className="ml-4 space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          New job posting added
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          1 day ago
-                        </p>
-                      </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-8">
+                  <div className="flex items-center">
+                    <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <div className="ml-4 space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        New employee onboarded
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        2 hours ago
+                      </p>
                     </div>
                   </div>
-                </CardContent>
-              </CardHeader>
+                  <div className="flex items-center">
+                    <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <div className="ml-4 space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        Payroll processed
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        5 hours ago
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <div className="ml-4 space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        New job posting added
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        1 day ago
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
             </Card>
           </div>
         </TabsContent>
