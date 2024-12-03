@@ -4,6 +4,86 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
+export async function POST(request: NextRequest) {
+  try {
+    const { 
+      startDate, 
+      endDate, 
+      reason, 
+      leaveType, 
+      position, 
+      departmentId, 
+      isPaidLeave,
+      createdById,
+      employeeId 
+    } = await request.json();
+
+    console.log('Creating leave with data:', { createdById, employeeId, startDate, endDate, leaveType });
+
+    // First, find the employee record directly
+    const employee = await prisma.employee.findUnique({
+      where: { id: employeeId },
+      include: { user: true }
+    });
+
+    if (!employee) {
+      console.log('No employee found:', employeeId);
+      return NextResponse.json({ 
+        error: 'Employee not found.' 
+      }, { status: 404 });
+    }
+
+    // Create the leave application
+    const leaveApplication = await prisma.leave.create({
+      data: {
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        reason,
+        leaveType,
+        position,
+        isPaidLeave: isPaidLeave ?? false,
+        status: 'PENDING',
+        employee: {
+          connect: { id: employeeId }
+        },
+        department: {
+          connect: { id: departmentId }
+        },
+        createdBy: {
+          connect: { id: createdById }
+        }
+      },
+      include: {
+        employee: {
+          select: {
+            firstName: true,
+            lastName: true,
+          }
+        },
+        department: {
+          select: {
+            name: true
+          }
+        },
+        createdBy: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
+
+    console.log('Leave application created:', leaveApplication);
+    return NextResponse.json(leaveApplication, { status: 201 });
+  } catch (error) {
+    console.error('Error creating leave application:', error);
+    return NextResponse.json({ 
+      error: 'An error occurred while creating the leave application.',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Extract JWT from cookies
@@ -17,9 +97,7 @@ export async function GET(request: NextRequest) {
 
     let user;
     try {
-      // Verify and decode the token
       user = jwt.verify(token, JWT_SECRET) as { role?: string, id?: string };
-
       if (typeof user !== 'object' || !user.role || !user.id) {
         console.log('Invalid token payload:', user);
         return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
@@ -35,7 +113,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Permission denied. Only Admins and HR can access this resource.' }, { status: 403 });
     }
 
-    // Fetch all leave applications with associated employee and department details
     const leaveApplications = await prisma.leave.findMany({
       include: {
         employee: {
@@ -52,21 +129,25 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
+        createdBy: {
+          select: {
+            name: true,
+          },
+        },
+        approvedBy: {
+          select: {
+            name: true,
+          },
+        },
       },
-      where: {
-        employee: { isNot: undefined },  // Ensure employee exists
-        department: { isNot: undefined }  // Ensure department exists
-      }
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
-    if (!leaveApplications || leaveApplications.length === 0) {
-      console.log('No leave applications found');
-      return NextResponse.json([], { status: 200 });
-    }
 
-    console.log('Successfully fetched leave applications:', leaveApplications.length);
     return NextResponse.json(leaveApplications, { status: 200 });
   } catch (error) {
     console.error('Error fetching leave applications:', error);
-    return NextResponse.json({ error: 'Something went wrong.', details: (error as Error).message }, { status: 500 });
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

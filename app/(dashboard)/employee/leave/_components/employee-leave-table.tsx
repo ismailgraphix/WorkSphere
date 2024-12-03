@@ -1,101 +1,168 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useToast } from "@/hooks/use-toast"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Eye, Loader2 } from 'lucide-react'
+import { format } from "date-fns"
 
 interface LeaveData {
-  id: string;
-  startDate: Date;
-  endDate: Date;
-  type: string;
-  status: string;
-  reason: string;
-  employeeId: string;
+  id: string
+  startDate: string
+  endDate: string
+  leaveType: string
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  reason: string
+  rejectionReason?: string
+  employee: {
+    firstName: string
+    lastName: string
+  }
+  department: {
+    name: string
+  }
 }
 
 export default function EmployeeLeaveTable() {
-  const [leaveApplications, setLeaveApplications] = useState<LeaveData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [leaveApplications, setLeaveApplications] = useState<LeaveData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
-  // Wrap the fetchLeaveApplications function in useCallback
   const fetchLeaveApplications = useCallback(async () => {
     try {
-      const user = localStorage.getItem('user');
-      if (!user) {
-        throw new Error('User not found in localStorage');
+      setLoading(true)
+      setError(null)
+
+      // Get user from localStorage
+      const userStr = localStorage.getItem('user')
+      if (!userStr) {
+        throw new Error('User not found in localStorage')
       }
 
-      const userData = JSON.parse(user);
-      console.log('User Data:', userData);
+      const user = JSON.parse(userStr)
+      console.log('User Data:', user)
 
-      const employeeId = userData.id;
-      if (!employeeId) {
-        throw new Error('Employee ID not found in user data');
+      if (!user.employee?.id) {
+        throw new Error('Employee record not found')
       }
 
-      console.log('Fetching leaves for employee:', employeeId);
+      console.log('Fetching leaves for employee:', user.employee.id)
 
-      const response = await fetch(`/api/leave/employee/${employeeId}`);
+      const response = await fetch(`/api/leave/employee/${user.employee.id}`)
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch leave applications');
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch leave applications')
       }
 
-      const data = await response.json();
-      console.log('Received leave data:', data);
-      setLeaveApplications(data);
+      const data = await response.json()
+      console.log('Received leave data:', data)
+      setLeaveApplications(data)
     } catch (error) {
-      console.error('Error fetching leave applications:', error);
+      console.error('Error fetching leave applications:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load leave applications'
+      setError(errorMessage)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to load your leave applications. Please try again.",
+        description: errorMessage,
         variant: "destructive",
-      });
-      setLeaveApplications([]);
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [toast]);
+  }, [toast])
 
-  // Pass fetchLeaveApplications as a dependency
   useEffect(() => {
-    fetchLeaveApplications();
-  }, [fetchLeaveApplications]);
+    fetchLeaveApplications()
+  }, [fetchLeaveApplications])
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-red-500">Error</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>{error}</p>
+          <Button onClick={fetchLeaveApplications} className="mt-4">
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    )
   }
 
   if (leaveApplications.length === 0) {
-    return <div>No leave applications found.</div>;
+    return (
+      <Card>
+        <CardContent className="flex justify-center items-center h-32">
+          <p className="text-muted-foreground">No leave applications found.</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Start Date</TableHead>
-          <TableHead>End Date</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Reason</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {leaveApplications.map((leave) => (
-          <TableRow key={leave.id}>
-            <TableCell>{new Date(leave.startDate).toLocaleDateString()}</TableCell>
-            <TableCell>{new Date(leave.endDate).toLocaleDateString()}</TableCell>
-            <TableCell>{leave.type}</TableCell>
-            <TableCell>{leave.status}</TableCell>
-            <TableCell>{leave.reason}</TableCell>
-            <TableCell>
-              {/* Add your action buttons here */}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
+    <Card>
+      <CardHeader>
+        <CardTitle>My Leave Applications</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Start Date</TableHead>
+              <TableHead>End Date</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Reason</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {leaveApplications.map((leave) => (
+              <TableRow key={leave.id}>
+                <TableCell>{format(new Date(leave.startDate), 'PP')}</TableCell>
+                <TableCell>{format(new Date(leave.endDate), 'PP')}</TableCell>
+                <TableCell>{leave.leaveType}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant={
+                      leave.status === 'PENDING'
+                        ? 'outline'
+                        : leave.status === 'APPROVED'
+                        ? 'default'
+                        : 'destructive'
+                    }
+                  >
+                    {leave.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="max-w-[200px] truncate" title={leave.reason}>
+                  {leave.reason}
+                </TableCell>
+                <TableCell>
+                  <Button size="sm" variant="outline">
+                    <Eye className="h-4 w-4 mr-2" />
+                    View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  )
 }

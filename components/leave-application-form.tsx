@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import { format, differenceInDays } from "date-fns"
 import { Calendar as CalendarIcon, Loader2, Search } from "lucide-react"
+import { ScrollArea } from './ui/scroll-area'
 
 interface Employee {
   id: string
@@ -209,6 +210,9 @@ export default function LeaveApplicationForm() {
   }
 
   return (
+    <ScrollArea>
+
+  
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle>Leave Application</CardTitle>
@@ -384,5 +388,6 @@ export default function LeaveApplicationForm() {
         </form>
       </CardContent>
     </Card>
+    </ScrollArea>
   )
 }

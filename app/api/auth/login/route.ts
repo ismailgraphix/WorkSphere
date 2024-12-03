@@ -23,12 +23,19 @@ export async function POST(req: NextRequest) {
           { email: emailOrEmployeeId },
           { employeeId: emailOrEmployeeId },
         ],
-      },
+      }
     });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
+
+    // Get the employee record
+    const employee = await prisma.employee.findUnique({
+      where: {
+        employeeId: user.employeeId
+      }
+    });
 
     // Generate JWT token
     const token = jwt.sign(
@@ -53,7 +60,8 @@ export async function POST(req: NextRequest) {
           employeeId: user.employeeId,
           position: user.position,
           role: user.role,
-          profileImage: user.profileImage
+          profileImage: user.profileImage,
+          employee: employee // Include the employee record
         }
       },
       { status: 200 }
