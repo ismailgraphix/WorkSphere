@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle,  } from "@/components/ui/dialog"
 import { Eye, Loader2 } from 'lucide-react'
 import { format } from "date-fns"
 
@@ -30,6 +31,8 @@ export default function EmployeeLeaveTable() {
   const [leaveApplications, setLeaveApplications] = useState<LeaveData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedLeave, setSelectedLeave] = useState<LeaveData | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const { toast } = useToast()
 
   const fetchLeaveApplications = useCallback(async () => {
@@ -79,6 +82,11 @@ export default function EmployeeLeaveTable() {
     fetchLeaveApplications()
   }, [fetchLeaveApplications])
 
+  const handleViewLeave = (leave: LeaveData) => {
+    setSelectedLeave(leave)
+    setIsModalOpen(true)
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -114,55 +122,101 @@ export default function EmployeeLeaveTable() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>My Leave Applications</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Start Date</TableHead>
-              <TableHead>End Date</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Reason</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {leaveApplications.map((leave) => (
-              <TableRow key={leave.id}>
-                <TableCell>{format(new Date(leave.startDate), 'PP')}</TableCell>
-                <TableCell>{format(new Date(leave.endDate), 'PP')}</TableCell>
-                <TableCell>{leave.leaveType}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      leave.status === 'PENDING'
-                        ? 'outline'
-                        : leave.status === 'APPROVED'
-                        ? 'default'
-                        : 'destructive'
-                    }
-                  >
-                    {leave.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="max-w-[200px] truncate" title={leave.reason}>
-                  {leave.reason}
-                </TableCell>
-                <TableCell>
-                  <Button size="sm" variant="outline">
-                    <Eye className="h-4 w-4 mr-2" />
-                    View
-                  </Button>
-                </TableCell>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>My Leave Applications</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Start Date</TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Reason</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            </TableHeader>
+            <TableBody>
+              {leaveApplications.map((leave) => (
+                <TableRow key={leave.id}>
+                  <TableCell>{format(new Date(leave.startDate), 'PP')}</TableCell>
+                  <TableCell>{format(new Date(leave.endDate), 'PP')}</TableCell>
+                  <TableCell>{leave.leaveType}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        leave.status === 'PENDING'
+                          ? 'outline'
+                          : leave.status === 'APPROVED'
+                          ? 'default'
+                          : 'destructive'
+                      }
+                    >
+                      {leave.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="max-w-[200px] truncate" title={leave.reason}>
+                    {leave.reason}
+                  </TableCell>
+                  <TableCell>
+                    <Button size="sm" variant="outline" onClick={() => handleViewLeave(leave)}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      View
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Leave Application Details</DialogTitle>
+          </DialogHeader>
+          {selectedLeave && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold">Leave Type</h4>
+                <p>{selectedLeave.leaveType}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold">Date Range</h4>
+                <p>{format(new Date(selectedLeave.startDate), 'PP')} - {format(new Date(selectedLeave.endDate), 'PP')}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold">Status</h4>
+                <Badge
+                  variant={
+                    selectedLeave.status === 'PENDING'
+                      ? 'outline'
+                      : selectedLeave.status === 'APPROVED'
+                      ? 'default'
+                      : 'destructive'
+                  }
+                >
+                  {selectedLeave.status}
+                </Badge>
+              </div>
+              <div>
+                <h4 className="font-semibold">Reason</h4>
+                <p>{selectedLeave.reason}</p>
+              </div>
+              {selectedLeave.status === 'REJECTED' && selectedLeave.rejectionReason && (
+                <div>
+                  <h4 className="font-semibold">Rejection Reason</h4>
+                  <p>{selectedLeave.rejectionReason}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
