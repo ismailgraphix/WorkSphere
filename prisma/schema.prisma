@@ -17,7 +17,7 @@ model User {
   profileImage String?
   role         Role    @default(EMPLOYEE)
 
-  // Relations
+   //Relations
   headedDepartments  Department[]  @relation("DepartmentHead")
   createdDepartments Department[]  @relation("DepartmentCreator")
   createdHolidays    Holiday[]     @relation("HolidayCreator")

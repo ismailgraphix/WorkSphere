@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "../hooks/use-toast"
+
 import { Pencil, Trash2, Plus, Loader2 } from 'lucide-react'
 import AddUserForm from './AddUserForm'
 
@@ -151,6 +152,8 @@ export function UserTable() {
     })
   }
 
+  
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -225,6 +228,7 @@ export function UserTable() {
                 <Button variant="outline" size="icon" onClick={() => handleDelete(user.id)} className="ml-2">
                   <Trash2 className="h-4 w-4" />
                 </Button>
+                
               </TableCell>
             </TableRow>
           ))}

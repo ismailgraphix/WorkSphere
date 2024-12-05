@@ -6,42 +6,42 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 export async function POST(request: NextRequest) {
   try {
-    // Extract and verify JWT token from headers or cookies
-    const cookies = request.headers.get('cookie');
+    // Temporarily disable token verification
+     const cookies = request.headers.get('cookie');
     const token = cookies?.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
 
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized. No token provided.' }, { status: 401 });
-    }
+       return NextResponse.json({ error: 'Unauthorized. No token provided.' }, { status: 401 });
+     }
 
-    let user;
-    try {
-      user = jwt.verify(token, JWT_SECRET);
-      if (typeof user !== 'object' || !user.role || !user.id) {
+     let user;
+     try {
+       user = jwt.verify(token, JWT_SECRET);
+       if (typeof user !== 'object' || !user.role || !user.id) {
         return NextResponse.json({ error: 'Invalid token payload.' }, { status: 401 });
-      }
-    } catch (error) {
-      console.error("Error occurred", error)
-      return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
-    }
+       }
+     } catch (error) {
+       console.error("Error occurred", error)
+       return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
+     }
 
     // Parse request body
     const body = await request.json();
     console.log('Received data:', body); // Log received data for debugging
 
-    // Validation
-    const requiredFields = [
-      'firstName', 'lastName', 'email', 'phoneNumber', 'gender', 'dateOfBirth',
+    // Temporarily disable validation
+     const requiredFields = [
+       'firstName', 'lastName', 'email', 'phoneNumber', 'gender', 'dateOfBirth',
       'address', 'nationalID', 'departmentId', 'position', 'dateOfJoining',
-      'employmentType', 'emergencyContactName', 'emergencyContactPhone',
-      'emergencyContactRelationship', 'maritalStatus'
-    ];
+       'employmentType', 'emergencyContactName', 'emergencyContactPhone',
+   'emergencyContactRelationship', 'maritalStatus'
+     ];
 
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json({ error: `${field} is required.` }, { status: 400 });
-      }
-    }
+     for (const field of requiredFields) {
+       if (!body[field]) {
+         return NextResponse.json({ error: `${field} is required.` }, { status: 400 });
+       }
+     }
 
     // Auto-generate employeeId
     const employeeId = `${body.firstName.slice(0, 3).toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`;
