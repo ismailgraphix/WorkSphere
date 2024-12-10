@@ -2,16 +2,17 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "../hooks/use-toast"
+import { Eye, EyeOff, WavesIcon as Wave } from 'lucide-react'
 
 export default function LoginForm() {
   const [emailOrEmployeeId, setEmailOrEmployeeId] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -29,7 +30,6 @@ export default function LoginForm() {
       const data = await response.json()
 
       if (response.ok) {
-        // Store user data in local storage
         localStorage.setItem('user', JSON.stringify(data.user));
 
         toast({
@@ -37,7 +37,6 @@ export default function LoginForm() {
           description: "Welcome back!",
         })
         
-        // Redirect based on user role
         switch (data.user.role) {
           case 'ADMIN':
             router.push('/admin')
@@ -66,43 +65,107 @@ export default function LoginForm() {
   }
 
   return (
-    <Card className="w-[350px]">
-      <CardHeader>
-        <CardTitle>Login</CardTitle>
-        <CardDescription>Enter your email or employee ID and password to access your account.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit}>
-          <div className="grid w-full items-center gap-4">
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="emailOrEmployeeId">Email or Employee ID</Label>
-              <Input
-                id="emailOrEmployeeId"
-                placeholder="Enter your email or employee ID"
-                value={emailOrEmployeeId}
-                onChange={(e) => setEmailOrEmployeeId(e.target.value)}
-                required
-              />
-            </div>
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+    <div className="flex min-h-screen">
+      <div className="hidden md:block relative w-1/2">
+        <Image
+          src="/assets/campaign-creators-gMsnXqILjp4-unsplash.jpg"
+          alt="HRMS Dashboard"
+          layout="fill"
+          objectFit="cover"
+          priority
+          className="brightness-50"
+        />
+        <div className="absolute bottom-10 left-10 text-white z-10">
+          <h1 className="text-5xl font-bold mb-4">HRMS<br/>Dashboard</h1>
+          <p className="text-xl">Manage your workforce efficiently</p>
+        </div>
+      </div>
+      
+      <div className="w-full md:w-1/2 bg-black text-white flex items-center justify-center p-8">
+        <div className="w-full max-w-md space-y-8">
+          <div className="flex justify-center">
+            <div className="bg-purple-600 rounded-xl px-4 py-2 flex items-center gap-2">
+              <Wave className="h-6 w-6" />
+              <span className="text-2xl font-bold">HRMS</span>
             </div>
           </div>
-        </form>
-      </CardContent>
-      <CardFooter>
-        <Button className="w-full" type="submit" disabled={isLoading} onClick={handleSubmit}>
-          {isLoading ? "Logging in..." : "Login"}
-        </Button>
-      </CardFooter>
-    </Card>
+          
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold">
+              Welcome <span className="inline-block animate-wave">👋</span>
+            </h2>
+            <p className="text-gray-400 mt-2">Please login to your account</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <Input
+                type="text"
+                placeholder="Email or Employee ID"
+                value={emailOrEmployeeId}
+                onChange={(e) => setEmailOrEmployeeId(e.target.value)}
+                className="h-12 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
+                required
+              />
+            </div>
+
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-12 bg-gray-900 border-gray-800 text-white placeholder:text-gray-500 pr-10"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-400"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {/* Removed Remember Me checkbox as it's not in the original workflow */}
+              </div>
+              <button
+                type="button"
+                className="text-sm text-purple-500 hover:text-purple-400"
+                onClick={() => router.push('/forgot-password')}
+              >
+                Forgot Password?
+              </button>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium"
+              disabled={isLoading}
+            >
+              {isLoading ? "Logging in..." : "Login"}
+            </Button>
+          </form>
+
+        </div>
+      </div>
+
+      <style jsx global>{`
+        @keyframes wave {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(-10deg); }
+          75% { transform: rotate(10deg); }
+        }
+        .animate-wave {
+          animation: wave 1.5s infinite;
+        }
+      `}</style>
+    </div>
   )
 }
