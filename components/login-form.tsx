@@ -76,7 +76,7 @@ export default function LoginForm() {
           className="brightness-50"
         />
         <div className="absolute bottom-10 left-10 text-white z-10">
-          <h1 className="text-5xl font-bold mb-4">HRMS<br/>Dashboard</h1>
+          <h1 className="text-5xl font-bold mb-4">WORKSPHERE<br/>Dashboard</h1>
           <p className="text-xl">Manage your workforce efficiently</p>
         </div>
       </div>
@@ -86,7 +86,7 @@ export default function LoginForm() {
           <div className="flex justify-center">
             <div className="bg-purple-600 rounded-xl px-4 py-2 flex items-center gap-2">
               <Wave className="h-6 w-6" />
-              <span className="text-2xl font-bold">HRMS</span>
+              <span className="text-2xl font-bold">WORKSPHERE</span>
             </div>
           </div>
           
