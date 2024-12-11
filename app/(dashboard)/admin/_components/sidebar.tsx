@@ -17,7 +17,7 @@ import {
   BriefcaseBusiness,
   Building2,
   CalendarCheck,
-  ChartNoAxesCombined,
+ 
   Clock,
   HandCoins,
   LayoutGrid,
@@ -36,7 +36,7 @@ const sidebarItems = [
   { icon: Building2, label: 'Departments', href: '/admin/departments' },
   { icon: HandCoins, label: 'Payroll', href: '/admin/payroll' },
   { icon: Clock, label: 'Attendance', href: '/admin/attendance' },
-  { icon: ChartNoAxesCombined, label: 'Reports', href: '/admin/reports' },
+ 
   { icon: TreePalm, label: 'Leave', href: '/admin/leave' },
   { icon: CalendarCheck, label: 'Holidays', href: '/admin/holidays' },
   { icon: BriefcaseBusiness, label: 'Jobs', href: '/admin/jobs' },

@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useToast } from "@/hooks/use-toast"
-import { Loader2 } from "lucide-react"
+import { useToast } from "../../../../../../hooks/use-toast"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
+import { Loader2, User, Briefcase, Phone, Mail, MapPin, CreditCard, Calendar, FileText, Link } from 'lucide-react'
 
 interface Employee {
   id: string
@@ -20,20 +24,29 @@ interface Employee {
   dateOfBirth: string
   address: string
   nationalID: string
+  maritalStatus: string
   department: { name: string }
   position: string
   dateOfJoining: string
   employmentType: string
-  maritalStatus: string
-  emergencyContactName: string
-  emergencyContactPhone: string
-  emergencyContactRelationship: string
+  employmentStatus: string
   salary?: number
   currency?: string
-  employmentStatus: string
   isProbation: boolean
   probationEndDate?: string
   contractEndDate?: string
+  emergencyContactName: string
+  emergencyContactPhone: string
+  emergencyContactRelationship: string
+  bankName: string
+  bankAccountNumber: string
+  bankBranch: string
+  taxID: string
+  socialSecurityNumber: string
+  profileImage: string
+  resumeLink: string
+  contractLink: string
+  identityDocumentLink: string
 }
 
 export default function ViewEmployeePage() {
@@ -71,60 +84,105 @@ export default function ViewEmployeePage() {
   if (!employee) return <div className="flex justify-center items-center h-screen">Employee not found</div>
 
   return (
-    <ScrollArea className="h-[80vh] w-full p-4">
+    <ScrollArea className="h-[calc(100vh-4rem)] w-full p-6">
       <Card className="w-full max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">Employee Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <CardContent className="p-6">
+          <div className="flex items-center space-x-4 mb-6">
+            <Avatar className="h-20 w-20">
+              <AvatarImage src={employee.profileImage} alt={`${employee.firstName} ${employee.lastName}`} />
+              <AvatarFallback>{employee.firstName[0]}{employee.lastName[0]}</AvatarFallback>
+            </Avatar>
             <div>
-              <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
-              <div className="space-y-2">
-                <p><span className="font-medium">Employee ID:</span> {employee.employeeId}</p>
-                <p><span className="font-medium">Name:</span> {`${employee.firstName} ${employee.middleName || ''} ${employee.lastName}`}</p>
-                <p><span className="font-medium">Email:</span> {employee.email}</p>
-                <p><span className="font-medium">Phone:</span> {employee.phoneNumber}</p>
-                <p><span className="font-medium">Gender:</span> {employee.gender}</p>
-                <p><span className="font-medium">Date of Birth:</span> {new Date(employee.dateOfBirth).toLocaleDateString()}</p>
-                <p><span className="font-medium">Address:</span> {employee.address}</p>
-                <p><span className="font-medium">National ID:</span> {employee.nationalID}</p>
-                <p><span className="font-medium">Marital Status:</span> {employee.maritalStatus}</p>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Employment Information</h3>
-              <div className="space-y-2">
-                <p><span className="font-medium">Department:</span> {employee.department.name}</p>
-                <p><span className="font-medium">Position:</span> {employee.position}</p>
-                <p><span className="font-medium">Date of Joining:</span> {new Date(employee.dateOfJoining).toLocaleDateString()}</p>
-                <p><span className="font-medium">Employment Type:</span> {employee.employmentType}</p>
-                <p><span className="font-medium">Employment Status:</span> 
-                  <Badge className="ml-2" variant={employee.employmentStatus === 'ACTIVE' ? 'default' : 'destructive'}>
-                    {employee.employmentStatus}
-                  </Badge>
-                </p>
-                <p><span className="font-medium">Salary:</span> {employee.salary ? `${employee.salary} ${employee.currency}` : 'N/A'}</p>
-                <p><span className="font-medium">Probation:</span> {employee.isProbation ? 'Yes' : 'No'}</p>
-                {employee.isProbation && employee.probationEndDate && (
-                  <p><span className="font-medium">Probation End Date:</span> {new Date(employee.probationEndDate).toLocaleDateString()}</p>
-                )}
-                {employee.contractEndDate && (
-                  <p><span className="font-medium">Contract End Date:</span> {new Date(employee.contractEndDate).toLocaleDateString()}</p>
-                )}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Emergency Contact</h3>
-              <div className="space-y-2">
-                <p><span className="font-medium">Name:</span> {employee.emergencyContactName}</p>
-                <p><span className="font-medium">Phone:</span> {employee.emergencyContactPhone}</p>
-                <p><span className="font-medium">Relationship:</span> {employee.emergencyContactRelationship}</p>
-              </div>
+              <h1 className="text-2xl font-bold">{`${employee.firstName} ${employee.middleName || ''} ${employee.lastName}`}</h1>
+              <p className="text-muted-foreground">{employee.position}</p>
+              <Badge className="mt-1" variant={employee.employmentStatus === 'ACTIVE' ? 'default' : 'destructive'}>
+                {employee.employmentStatus}
+              </Badge>
             </div>
           </div>
+
+          <Tabs defaultValue="personal" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="personal">Personal</TabsTrigger>
+              <TabsTrigger value="employment">Employment</TabsTrigger>
+              <TabsTrigger value="financial">Financial</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
+            </TabsList>
+            <TabsContent value="personal">
+              <div className="grid grid-cols-2 gap-4">
+                <InfoItem icon={User} label="Employee ID" value={employee.employeeId} />
+                <InfoItem icon={Mail} label="Email" value={employee.email} />
+                <InfoItem icon={Phone} label="Phone" value={employee.phoneNumber} />
+                <InfoItem icon={User} label="Gender" value={employee.gender} />
+                <InfoItem icon={Calendar} label="Date of Birth" value={new Date(employee.dateOfBirth).toLocaleDateString()} />
+                <InfoItem icon={MapPin} label="Address" value={employee.address} />
+                <InfoItem icon={FileText} label="National ID" value={employee.nationalID} />
+                <InfoItem icon={User} label="Marital Status" value={employee.maritalStatus} />
+              </div>
+              <Separator className="my-4" />
+              <h3 className="text-lg font-semibold mb-2">Emergency Contact</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <InfoItem icon={User} label="Name" value={employee.emergencyContactName} />
+                <InfoItem icon={Phone} label="Phone" value={employee.emergencyContactPhone} />
+                <InfoItem icon={User} label="Relationship" value={employee.emergencyContactRelationship} />
+              </div>
+            </TabsContent>
+            <TabsContent value="employment">
+              <div className="grid grid-cols-2 gap-4">
+                <InfoItem icon={Briefcase} label="Department" value={employee.department.name} />
+                <InfoItem icon={Briefcase} label="Position" value={employee.position} />
+                <InfoItem icon={Calendar} label="Date of Joining" value={new Date(employee.dateOfJoining).toLocaleDateString()} />
+                <InfoItem icon={Briefcase} label="Employment Type" value={employee.employmentType} />
+                <InfoItem icon={Briefcase} label="Probation" value={employee.isProbation ? 'Yes' : 'No'} />
+                {employee.isProbation && employee.probationEndDate && (
+                  <InfoItem icon={Calendar} label="Probation End Date" value={new Date(employee.probationEndDate).toLocaleDateString()} />
+                )}
+                {employee.contractEndDate && (
+                  <InfoItem icon={Calendar} label="Contract End Date" value={new Date(employee.contractEndDate).toLocaleDateString()} />
+                )}
+              </div>
+            </TabsContent>
+            <TabsContent value="financial">
+              <div className="grid grid-cols-2 gap-4">
+                <InfoItem icon={CreditCard} label="Salary" value={employee.salary ? `${employee.salary} ${employee.currency}` : 'N/A'} />
+                <InfoItem icon={CreditCard} label="Bank Name" value={employee.bankName} />
+                <InfoItem icon={CreditCard} label="Bank Account" value={employee.bankAccountNumber} />
+                <InfoItem icon={CreditCard} label="Bank Branch" value={employee.bankBranch} />
+                <InfoItem icon={FileText} label="Tax ID" value={employee.taxID} />
+                <InfoItem icon={FileText} label="Social Security Number" value={employee.socialSecurityNumber} />
+              </div>
+            </TabsContent>
+            <TabsContent value="documents">
+              <div className="grid grid-cols-2 gap-4">
+                <DocumentLink label="Resume" href={employee.resumeLink} />
+                <DocumentLink label="Contract" href={employee.contractLink} />
+                <DocumentLink label="Identity Document" href={employee.identityDocumentLink} />
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </ScrollArea>
+  )
+}
+
+function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: string }) {
+  return (
+    <div className="flex items-center space-x-2">
+      <Icon className="h-4 w-4 text-muted-foreground" />
+      <span className="font-medium">{label}:</span>
+      <span>{value}</span>
+    </div>
+  )
+}
+
+function DocumentLink({ label, href }: { label: string, href: string }) {
+  return (
+    <Button variant="outline" className="w-full justify-start" asChild>
+      <a href={href} target="_blank" rel="noopener noreferrer">
+        <Link className="mr-2 h-4 w-4" />
+        {label}
+      </a>
+    </Button>
   )
 }
