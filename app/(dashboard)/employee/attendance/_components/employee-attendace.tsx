@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Clock, Calendar } from "lucide-react"
+import { Loader2, Clock, Calendar } from 'lucide-react'
 import { format } from 'date-fns'
 
 interface AttendanceRecord {
@@ -33,9 +33,11 @@ export default function EmployeeAttendance() {
       const response = await fetch('/api/attendance')
       if (response.ok) {
         const data = await response.json()
-        setTodayRecord(data.find((record: AttendanceRecord) => 
-          new Date(record.date).toDateString() === new Date().toDateString()
-        ))
+        const today = new Date().toDateString()
+        const todayRecord = data.find((record: AttendanceRecord) => 
+          new Date(record.date).toDateString() === today
+        )
+        setTodayRecord(todayRecord || null)
       }
     } catch (error) {
       console.error('Error fetching today\'s record:', error)
@@ -65,7 +67,11 @@ export default function EmployeeAttendance() {
 
       if (response.ok) {
         const data = await response.json()
-        setTodayRecord(data)
+        setTodayRecord(prevRecord => ({
+          ...prevRecord,
+          ...data,
+          [type]: new Date(data[type]).toISOString()
+        }))
         toast({
           title: "Success",
           description: `${type === 'checkIn' ? 'Checked in' : 'Checked out'} successfully`,
@@ -101,7 +107,7 @@ export default function EmployeeAttendance() {
             <div className="flex space-x-4">
               <Button
                 onClick={() => handleAttendance('checkIn')}
-                disabled={loading || todayRecord?.checkIn !== undefined}
+                disabled={loading || !!todayRecord?.checkIn}
                 className="flex-1"
               >
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Clock className="mr-2 h-4 w-4" />}
@@ -109,7 +115,7 @@ export default function EmployeeAttendance() {
               </Button>
               <Button
                 onClick={() => handleAttendance('checkOut')}
-                disabled={loading || todayRecord?.checkIn === undefined || todayRecord?.checkOut !== undefined}
+                disabled={loading || !todayRecord?.checkIn || !!todayRecord?.checkOut}
                 className="flex-1"
               >
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Clock className="mr-2 h-4 w-4" />}

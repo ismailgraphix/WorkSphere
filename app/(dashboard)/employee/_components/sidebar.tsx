@@ -7,10 +7,10 @@ import {
   LayoutDashboard,
   Calendar,
   Clock,
-  FileText,
-  User,
+  
+
   Settings,
-  Wallet,
+  
   Building2,
   CalendarDays,
   ChevronLeft,
@@ -37,14 +37,14 @@ export default function EmployeeSidebar() {
     { href: '/employee/leave', icon: Calendar, label: 'Leave Management' },
     { href: '/employee/holidays', icon: CalendarDays, label: 'Holidays' },
     { href: '/employee/attendance', icon: Clock, label: 'Attendance' },
-    { href: '/employee/payslips', icon: Wallet, label: 'Payslips' },
-    { href: '/employee/documents', icon: FileText, label: 'Documents' },
+   
+    
     { href: '/employee/department', icon: Building2, label: 'My Department' },
   ]
 
   const accountItems = [
-    { href: '/employee/profile', icon: User, label: 'My Profile' },
-    { href: '/employee/settings', icon: Settings, label: 'Settings' },
+  
+    { href: '/settings', icon: Settings, label: 'Settings' },
   ]
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
