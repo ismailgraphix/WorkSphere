@@ -13,43 +13,49 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Separator } from "@/components/ui/separator"
-import { Users, Building2, CalendarCheck, HandCoins, Clock, BarChartIcon as ChartBar, Settings, Menu } from 'lucide-react'
+import { LayoutGrid, Users, FileText, Clock, CalendarCheck, TreePalm, Briefcase, GraduationCap, MessageSquare, Settings, ChevronLeft, ChevronRight } from 'lucide-react'
 import WorkSphereLogo from '@/components/WorkSphereLogo'
 
 const sidebarItems = [
-  { icon: Users, label: 'Dashboard', href: '/hr' },
+  { icon: LayoutGrid, label: 'Dashboard', href: '/hr' },
   { icon: Users, label: 'Employees', href: '/hr/employees' },
-  { icon: Building2, label: 'Departments', href: '/hr/departments' },
-  { icon: HandCoins, label: 'Payroll', href: '/hr/payroll' },
+  { icon: FileText, label: 'Recruitment', href: '/hr/recruitment' },
   { icon: Clock, label: 'Attendance', href: '/hr/attendance' },
-  { icon: ChartBar, label: 'Reports', href: '/hr/reports' },
-  { icon: CalendarCheck, label: 'Leave Management', href: '/hr/leave' },
+  { icon: TreePalm, label: 'Leave Management', href: '/hr/leave' },
+  { icon: CalendarCheck, label: 'Holidays', href: '/hr/holidays' },
+  { icon: Briefcase, label: 'Job Postings', href: '/hr/jobs' },
+  { icon: GraduationCap, label: 'Training', href: '/hr/training' },
+  { icon: MessageSquare, label: 'Employee Relations', href: '/hr/relations' },
+]
+
+const settingsItems = [
   { icon: Settings, label: 'Settings', href: '/hr/settings' },
 ]
 
-export default function HrSidebar() {
+export default function HRSidebar() {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className={cn(
-        "relative flex flex-col h-screen bg-background border-r",
+      <aside className={cn(
+        "relative flex flex-col h-screen bg-gray-800 text-white transition-all duration-300 ease-in-out",
         isCollapsed ? "w-[80px]" : "w-64"
       )}>
         <div className="flex items-center justify-between p-4">
           <Link href="/hr" className="flex items-center space-x-2">
             <WorkSphereLogo isCollapsed={isCollapsed} />
-            {!isCollapsed && <h2 className="text-xl font-semibold"></h2>}
           </Link>
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="text-white hover:bg-gray-700"
             onClick={() => setIsCollapsed(!isCollapsed)}
           >
-            <Menu className="h-4 w-4" />
-            <span className="sr-only">Toggle sidebar</span>
+            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            <span className="sr-only">
+              {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            </span>
           </Button>
         </div>
         <ScrollArea className="flex-1 py-2">
@@ -60,8 +66,8 @@ export default function HrSidebar() {
                   <Link
                     href={item.href}
                     className={cn(
-                      "flex items-center space-x-2 rounded-md p-2 hover:bg-accent hover:text-accent-foreground",
-                      pathname === item.href && "bg-accent text-accent-foreground",
+                      "flex items-center space-x-2 rounded-md p-2 hover:bg-gray-700",
+                      pathname === item.href && "bg-gray-700",
                       isCollapsed && "justify-center"
                     )}
                   >
@@ -75,22 +81,36 @@ export default function HrSidebar() {
               </Tooltip>
             ))}
           </nav>
+          <Separator className="my-4 bg-gray-700" />
+          <div className="px-2">
+            {!isCollapsed && (
+              <h3 className="text-gray-400 uppercase text-xs mb-2 px-2">Settings</h3>
+            )}
+            <nav className="space-y-1">
+              {settingsItems.map((item) => (
+                <Tooltip key={item.href} delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "flex items-center space-x-2 rounded-md p-2 hover:bg-gray-700",
+                        pathname === item.href && "bg-gray-700",
+                        isCollapsed && "justify-center"
+                      )}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {!isCollapsed && <span>{item.label}</span>}
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="flex items-center gap-4">
+                    {item.label}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </nav>
+          </div>
         </ScrollArea>
-        <Separator className="my-2" />
-        <div className="p-4">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full justify-center"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-          >
-            {isCollapsed ? <Menu className="h-4 w-4" /> : "Collapse"}
-            <span className="sr-only">
-              {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            </span>
-          </Button>
-        </div>
-      </div>
+      </aside>
     </TooltipProvider>
   )
 }
