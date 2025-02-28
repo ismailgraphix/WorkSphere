@@ -4,6 +4,128 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret'; // Ensure this matches the one used in login
 
+type DepartmentWithRelations = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  departmentHeadId: string | null;
+  createdById: string;
+  departmentHead: {
+    id: string;
+    name: string;
+    employeeId: string;
+    employee: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      employeeId: string;
+    } | null;
+  } | null;
+  employees: Array<{
+    id: string;
+    employeeId: string;
+    firstName: string;
+    lastName: string;
+  }>;
+  Leave: Array<{
+    id: string;
+    startDate: Date;
+    endDate: Date;
+    status: string;
+    employee: {
+      firstName: string;
+      lastName: string;
+      employeeId: string;
+    };
+  }>;
+};
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { departmentId: string } }
+) {
+  try {
+    const cookies = request.headers.get('cookie');
+    const token = cookies?.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const decodedToken = jwt.verify(token, JWT_SECRET) as { employeeId: string, role: string };
+
+    if (decodedToken.role !== 'ADMIN' && decodedToken.role !== 'HR') {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
+    }
+
+    const department = await prisma.department.findUnique({
+      where: { id: params.departmentId },
+      include: {
+        departmentHead: {
+          include: {
+            employee: true
+          }
+        },
+        employees: {
+          select: {
+            id: true,
+            employeeId: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        Leave: {
+          take: 10,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            employee: {
+              select: {
+                firstName: true,
+                lastName: true,
+                employeeId: true,
+              },
+            },
+          },
+        },
+      },
+    }) as DepartmentWithRelations;
+
+    if (!department) {
+      return NextResponse.json({ error: 'Department not found' }, { status: 404 });
+    }
+
+    const transformedDepartment = {
+      ...department,
+      departmentHead: department.departmentHead?.employee ? {
+        id: department.departmentHead.employee.id,
+        employeeId: department.departmentHead.employee.employeeId,
+        firstName: department.departmentHead.employee.firstName,
+        lastName: department.departmentHead.employee.lastName,
+        name: `${department.departmentHead.employee.firstName} ${department.departmentHead.employee.lastName}`,
+      } : null,
+      employees: department.employees.map(emp => ({
+        ...emp,
+        name: `${emp.firstName} ${emp.lastName}`,
+      })),
+      leaves: department.Leave.map(leave => ({
+        ...leave,
+        employee: {
+          ...leave.employee,
+          name: `${leave.employee.firstName} ${leave.employee.lastName}`,
+        },
+      })),
+    };
+
+    console.log('Transformed Department:', transformedDepartment);
+    return NextResponse.json(transformedDepartment);
+  } catch (error) {
+    console.error('Error fetching department details:', error);
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
+  }
+}
+
 export async function PUT(request: NextRequest, { params }: { params: { departmentId: string } }) {
   try {
     const { departmentId } = params;

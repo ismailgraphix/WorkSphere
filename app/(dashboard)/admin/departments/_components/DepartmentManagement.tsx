@@ -50,19 +50,49 @@ import { Department } from '@/types/department'
 import { AddDepartmentModal } from './AddDepartmentModal'
 import { EditDepartmentModal } from './EditDepartmentModal'
 
+interface DepartmentWithDetails extends Department {
+  departmentHead: {
+    id: string;
+    employeeId: string;
+    firstName: string;
+    lastName: string;
+    name: string;
+  } | null;
+  employees: Array<{
+    id: string;
+    employeeId: string;
+    firstName: string;
+    lastName: string;
+    name: string;
+  }>;
+  leaves: Array<{
+    id: string;
+    startDate: Date;
+    endDate: Date;
+    status: string;
+    employee: {
+      firstName: string;
+      lastName: string;
+      employeeId: string;
+      name: string;
+    };
+  }>;
+}
+
 export default function DepartmentManagement() {
-  const [departments, setDepartments] = useState<Department[]>([])
+  const [departments, setDepartments] = useState<DepartmentWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
   const [editingDepartment, setEditingDepartment] = useState<string | null>(null)
   const [deletingDepartment, setDeletingDepartment] = useState<string | null>(null)
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [viewingDepartment, setViewingDepartment] = useState<DepartmentWithDetails | null>(null)
 
   const fetchDepartments = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/api/departments', { withCredentials: true })
+      const response = await axios.get<DepartmentWithDetails[]>('/api/departments', { withCredentials: true })
       setDepartments(response.data)
     } catch (error) {
       console.error('Error fetching departments:', error)
@@ -110,7 +140,22 @@ export default function DepartmentManagement() {
     }
   };
 
-  const columns: ColumnDef<Department>[] = [
+  const fetchDepartmentDetails = async (departmentId: string) => {
+    try {
+      const response = await axios.get(`/api/departments/${departmentId}`);
+      console.log('Department Details Response:', response.data);
+      setViewingDepartment(response.data);
+    } catch (error) {
+      console.error('Error fetching department details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch department details.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const columns: ColumnDef<DepartmentWithDetails>[] = [
     {
       id: "select",
       header: ({ table }) => (
@@ -143,9 +188,9 @@ export default function DepartmentManagement() {
       ),
     },
     {
-      accessorFn: (row) => row.departmentHead ? row.departmentHead.name : null,
+      accessorFn: (row) => row.departmentHead?.name || "No Head Assigned",
       header: "Department Head",
-      cell: (info) => info.getValue() || "No Head Assigned",
+      cell: (info) => info.getValue(),
     },
     {
       accessorKey: "isActive",
@@ -171,11 +216,111 @@ export default function DepartmentManagement() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => setEditingDepartment(department.id)}>Edit</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => fetchDepartmentDetails(department.id)}>
+                  View Details
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setEditingDepartment(department.id)}>
+                  Edit
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setDeletingDepartment(department.id)}>Delete</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDeletingDepartment(department.id)}>
+                  Delete
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <AlertDialog open={viewingDepartment?.id === department.id} onOpenChange={() => setViewingDepartment(null)}>
+              <AlertDialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Department Details</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-semibold mb-2">Department Information</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="font-medium">Name:</p>
+                            <p>{viewingDepartment?.name}</p>
+                          </div>
+                          
+                          <div>
+                            <p className="font-medium">Status:</p>
+                            <p>
+                              <Badge variant={viewingDepartment?.isActive ? "success" : "destructive"}>
+                                {viewingDepartment?.isActive ? "Active" : "Inactive"}
+                              </Badge>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Employees</h3>
+                        <div className="max-h-40 overflow-y-auto">
+                          {viewingDepartment?.employees?.length ? (
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Employee ID</TableHead>
+                                  <TableHead>Name</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {viewingDepartment.employees.map((employee) => (
+                                  <TableRow key={employee.id}>
+                                    <TableCell>{employee.employeeId}</TableCell>
+                                    <TableCell>{employee.name}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          ) : (
+                            <p>No employees in this department</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="font-semibold mb-2">Recent Leave Applications</h3>
+                        <div className="max-h-40 overflow-y-auto">
+                          {viewingDepartment?.leaves?.length ? (
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Employee</TableHead>
+                                  <TableHead>Start Date</TableHead>
+                                  <TableHead>End Date</TableHead>
+                                  <TableHead>Status</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {viewingDepartment.leaves.map((leave) => (
+                                  <TableRow key={leave.id}>
+                                    <TableCell>{leave.employee.name}</TableCell>
+                                    <TableCell>{new Date(leave.startDate).toLocaleDateString()}</TableCell>
+                                    <TableCell>{new Date(leave.endDate).toLocaleDateString()}</TableCell>
+                                    <TableCell>
+                                      <Badge variant={leave.status === 'APPROVED' ? 'success' : 
+                                                 leave.status === 'PENDING' ? 'default' : 'destructive'}>
+                                        {leave.status}
+                                      </Badge>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          ) : (
+                            <p>No leave applications found</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Close</AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             <EditDepartmentModal
               isOpen={editingDepartment === department.id}
@@ -217,7 +362,7 @@ export default function DepartmentManagement() {
     },
   ]
 
-  const table = useReactTable({
+  const table = useReactTable<DepartmentWithDetails>({
     data: departments,
     columns,
     getCoreRowModel: getCoreRowModel(),
