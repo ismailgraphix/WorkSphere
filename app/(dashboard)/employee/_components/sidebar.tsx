@@ -8,7 +8,6 @@ import {
   Calendar,
   Clock,
   Settings,
-  Building2,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -36,7 +35,7 @@ export default function EmployeeSidebar() {
     { href: '/employee/attendance', icon: Clock, label: 'Attendance' },
    
     
-    { href: '/employee/department', icon: Building2, label: 'My Department' },
+    
   ]
 
   const accountItems = [

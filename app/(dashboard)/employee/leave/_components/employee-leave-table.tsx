@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle,  } from "@/components/ui/dialog"
 import { Eye, Loader2 } from 'lucide-react'
 import { format } from "date-fns"
+import { DownloadButton } from "@/components/ui/download-button"
 
 interface LeaveData {
   id: string
@@ -18,12 +19,18 @@ interface LeaveData {
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   reason: string
   rejectionReason?: string
+  isPaidLeave: boolean
   employee: {
     firstName: string
     lastName: string
+    employeeId: string
   }
   department: {
     name: string
+  }
+  approvedBy?: {
+    name: string
+    position: string
   }
 }
 
@@ -162,10 +169,13 @@ export default function EmployeeLeaveTable() {
                     {leave.reason}
                   </TableCell>
                   <TableCell>
-                    <Button size="sm" variant="outline" onClick={() => handleViewLeave(leave)}>
-                      <Eye className="h-4 w-4 mr-2" />
-                      View
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleViewLeave(leave)}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        View
+                      </Button>
+                      <DownloadButton leaveId={leave.id} />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -213,6 +223,13 @@ export default function EmployeeLeaveTable() {
                   <p>{selectedLeave.rejectionReason}</p>
                 </div>
               )}
+              <div className="flex justify-end pt-4 border-t">
+                <DownloadButton 
+                  leaveId={selectedLeave.id} 
+                  variant="default"
+                  size="default"
+                />
+              </div>
             </div>
           )}
         </DialogContent>

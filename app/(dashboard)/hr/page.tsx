@@ -1,158 +1,178 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Users, Building2, CalendarCheck, DollarSign,   } from 'lucide-react'
+import { Users, Briefcase, FileText, Calendar } from "lucide-react"
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-const stats = [
-  { title: "Total Employees", value: "248", icon: Users, change: "+12% from last month" },
-  { title: "Open Positions", value: "15", icon: Building2, change: "+3 from last week" },
-  { title: "Leave Requests", value: "24", icon: CalendarCheck, change: "6 pending approval" },
-  { title: "Payroll", value: "$528,490", icon: DollarSign, change: "Next run on 30th" },
-]
-
-const recentActivities = [
-  { action: "New employee onboarded", department: "Engineering", time: "2 hours ago" },
-  { action: "Leave request approved", department: "Marketing", time: "4 hours ago" },
-  { action: "Performance review completed", department: "Sales", time: "Yesterday" },
-  { action: "New job posting created", department: "Human Resources", time: "2 days ago" },
-  { action: "Payroll processed", department: "Finance", time: "3 days ago" },
-]
+interface HRDashboardData {
+  totalEmployees: number
+  pendingLeaveRequests: number
+  openJobs: number
+  recentApplications: Array<{
+    id: string
+    job: { title: string }
+    user: { name: string }
+    appliedAt: string
+    status: string
+  }>
+  leaveData: Array<{
+    month: string
+    sick: number
+    vacation: number
+    personal: number
+  }>
+}
 
 export default function HRDashboard() {
-  const [activeTab, setActiveTab] = useState("overview")
+  const [dashboardData, setDashboardData] = useState<HRDashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await fetch("/api/dashboard/hr")
+      if (!response.ok) {
+        throw new Error("Failed to fetch dashboard data")
+      }
+      const data = await response.json()
+      setDashboardData(data)
+    } catch (err) {
+      setError("Error fetching dashboard data")
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, []) // Removed fetchDashboardData from dependencies
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <p className="text-red-500 text-xl mb-4">Error: {error}</p>
+        <Button onClick={fetchDashboardData}>Retry</Button>
+      </div>
+    )
+  }
 
   return (
-    <ScrollArea className="h-screen">
-      <div className="container mx-auto p-6 space-y-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold tracking-tight">HR Dashboard</h1>
-          <Button>Generate Report</Button>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <Card key={stat.title}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">{stat.change}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="employees">Employees</TabsTrigger>
-            <TabsTrigger value="departments">Departments</TabsTrigger>
-          </TabsList>
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-              <Card className="col-span-4">
-                <CardHeader>
-                  <CardTitle>Recent Activities</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[300px]">
-                    <div className="space-y-4">
-                      {recentActivities.map((activity, i) => (
-                        <div key={i} className="flex justify-between items-center">
-                          <div>
-                            <p className="text-sm font-medium">{activity.action}</p>
-                            <p className="text-sm text-muted-foreground">{activity.department}</p>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{activity.time}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-              <Card className="col-span-3">
-                <CardHeader>
-                  <CardTitle>Department Distribution</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {["Engineering", "Marketing", "Sales", "Finance", "HR"].map((dept) => (
-                      <div key={dept} className="flex items-center space-x-2">
-                        <div className="w-full">
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>{dept}</span>
-                            <span className="text-muted-foreground">{Math.floor(Math.random() * 50 + 10)}%</span>
-                          </div>
-                          <Progress value={Math.random() * 100} className="h-2" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-              <Card className="col-span-4">
-                <CardHeader>
-                  <CardTitle>Upcoming Reviews</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {["John Doe", "Jane Smith", "Bob Johnson"].map((name) => (
-                      <div key={name} className="flex justify-between items-center">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-8 h-8 rounded-full bg-muted" />
-                          <span className="text-sm font-medium">{name}</span>
-                        </div>
-                        <Button size="sm">Schedule</Button>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="col-span-3">
-                <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Button className="w-full">Post New Job</Button>
-                  <Button className="w-full">Review Leave Requests</Button>
-                  <Button className="w-full">Start Onboarding</Button>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-          <TabsContent value="employees">
-            <Card>
-              <CardHeader>
-                <CardTitle>Employee Management</CardTitle>
-                <CardDescription>Manage your workforce efficiently</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>Employee management content goes here.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="departments">
-            <Card>
-              <CardHeader>
-                <CardTitle>Department Overview</CardTitle>
-                <CardDescription>View and manage company departments</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>Department overview content goes here.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+    <div className="flex-1 space-y-4 p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">HR Dashboard</h2>
       </div>
-    </ScrollArea>
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="recruitment">Recruitment</TabsTrigger>
+          <TabsTrigger value="leave-management">Leave Management</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardData?.totalEmployees ?? "N/A"}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Open Positions</CardTitle>
+                <Briefcase className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardData?.openJobs ?? "N/A"}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending Leave Requests</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardData?.pendingLeaveRequests ?? "N/A"}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Recent Applications</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardData?.recentApplications?.length ?? "N/A"}</div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <Card className="col-span-4">
+              <CardHeader>
+                <CardTitle>Leave Requests by Month</CardTitle>
+              </CardHeader>
+              <CardContent className="pl-2">
+                <ResponsiveContainer width="100%" height={350}>
+                  <BarChart data={dashboardData?.leaveData ?? []}>
+                    <XAxis dataKey="month" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ background: "#333", border: "none" }} labelStyle={{ color: "#fff" }} />
+                    <Legend />
+                    <Bar dataKey="sick" name="Sick Leave" fill="#ff8c00" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="vacation" name="Vacation" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="personal" name="Personal" fill="#82ca9d" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            <Card className="col-span-3">
+              <CardHeader>
+                <CardTitle>Recent Applications</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-8">
+                  {dashboardData?.recentApplications?.map((application) => (
+                    <div key={application.id} className="flex items-center">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={`/placeholder.svg?height=36&width=36`} alt={application.user.name} />
+                        <AvatarFallback>{application.user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="ml-4 space-y-1">
+                        <p className="text-sm font-medium leading-none">{application.user.name}</p>
+                        <p className="text-sm text-muted-foreground">Applied for {application.job.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(application.appliedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="ml-auto">
+                        <Button variant="outline" size="sm">
+                          Review
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }
+

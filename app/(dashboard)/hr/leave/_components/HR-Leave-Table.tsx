@@ -11,23 +11,32 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { format } from "date-fns"
 import { Loader2, Eye } from 'lucide-react'
+import { DownloadButton } from "@/components/ui/download-button"
 
 interface LeaveApplication {
   id: string
   startDate: string
   endDate: string
   reason: string
+  leaveType: string
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   rejectionReason?: string
+  isPaidLeave: boolean
   employee: {
     id: string
     firstName: string
     lastName: string
     position: string
+    employeeId: string
   }
   department: {
     id: string
     name: string
+  }
+  approvedBy?: {
+    id: string
+    name: string
+    position: string
   }
 }
 
@@ -180,10 +189,13 @@ export default function HRLeaveTable() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button size="sm" variant="outline" onClick={() => handleViewLeave(leave)}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => handleViewLeave(leave)}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          View
+                        </Button>
+                        <DownloadButton leaveId={leave.id} />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -272,6 +284,13 @@ export default function HRLeaveTable() {
                   </DialogFooter>
                 </>
               )}
+              <div className="flex justify-end pt-4 border-t">
+                <DownloadButton 
+                  leaveId={selectedLeave.id} 
+                  variant="default"
+                  size="default"
+                />
+              </div>
             </div>
           )}
         </DialogContent>

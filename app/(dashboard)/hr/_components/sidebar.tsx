@@ -19,7 +19,7 @@ import WorkSphereLogo from '@/components/WorkSphereLogo'
 const sidebarItems = [
   { icon: LayoutGrid, label: 'Dashboard', href: '/hr' },
   { icon: Users, label: 'Employees', href: '/hr/employees' },
-  { icon: FileText, label: 'Recruitment', href: '/hr/recruitment' },
+  { icon: FileText, label: 'Departments', href: '/hr/departments' },
   { icon: Clock, label: 'Attendance', href: '/hr/attendance' },
   { icon: TreePalm, label: 'Leave Management', href: '/hr/leave' },
   { icon: CalendarCheck, label: 'Holidays', href: '/hr/holidays' },
